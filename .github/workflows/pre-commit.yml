@@ -13,6 +13,8 @@ on:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_WITH: dev
     steps:
       - uses: actions/checkout@v2
       - name: Install talisman
@@ -25,4 +27,8 @@ jobs:
           sudo tar xzf /tmp/terraform-docs.tar.gz -C /usr/local/bin/
           sudo chmod 0755 /usr/local/bin/terraform-docs
       - uses: actions/setup-python@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
+          bundler-cache: true
       - uses: pre-commit/action@v2.0.0
