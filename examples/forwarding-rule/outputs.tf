@@ -13,7 +13,7 @@ EOD
 }
 
 output "mgmtPublicIPs" {
-  value = module.ha.mgmtPublicIPs
+  value       = module.ha.mgmtPublicIPs
   description = <<-EOD
 A map of BIG-IP instance name to public IP address, if any, on the management interface.
 EOD

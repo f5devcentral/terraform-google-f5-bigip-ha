@@ -1,5 +1,5 @@
 variable "prefix" {
-  type = string
+  type        = string
   description = <<-EOD
 The prefix to use when naming resources managed by this module. Must be RFC1035
 compliant and between 1 and 58 characters in length, inclusive.
@@ -7,14 +7,14 @@ EOD
 }
 
 variable "project_id" {
-  type = string
+  type        = string
   description = <<-EOD
 The GCP project identifier where the BIG-IP HA pair will be created
 EOD
 }
 
 variable "zones" {
-  type = list(string)
+  type        = list(string)
   description = <<-EOD
 The compute zones where where the BIG-IP instances will be deployed. At least one
 zone must be provided; if more than one zone is given, the instances will be
@@ -53,7 +53,7 @@ variable "mgmt_subnet_ids" {
     private_ip_primary = string
   })))
   validation {
-    condition     = can(regex("^x*$", join("", flatten([for outer in var.mgmt_subnet_ids: [for entry in outer: (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) ? "x" : "!"]]))))
+    condition     = can(regex("^x*$", join("", flatten([for outer in var.mgmt_subnet_ids : [for entry in outer : (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) ? "x" : "!"]]))))
     error_message = "Each mgmt_subnet_ids entry must contain a fully-qualified subnet self-link, and a valid or empty private IPv4 address."
   }
   default = [
@@ -74,7 +74,7 @@ variable "external_subnet_ids" {
     private_ip_secondary = string
   })))
   validation {
-    condition     = can(regex("^x*$", join("", flatten([for outer in var.external_subnet_ids: [for entry in outer: (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) && (coalesce(entry.private_ip_secondary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/[0-9]{1,2})?$", entry.private_ip_secondary))) ? "x" : "!"]]))))
+    condition     = can(regex("^x*$", join("", flatten([for outer in var.external_subnet_ids : [for entry in outer : (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) && (coalesce(entry.private_ip_secondary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/[0-9]{1,2})?$", entry.private_ip_secondary))) ? "x" : "!"]]))))
     error_message = "Each external_subnet_ids entry must contain a fully-qualified subnet self-link, and valid or empty private IPv4 addresses."
   }
   default = [
@@ -93,7 +93,7 @@ variable "internal_subnet_ids" {
     private_ip_primary = string
   })))
   validation {
-    condition     = can(regex("^x*$", join("", flatten([for outer in var.internal_subnet_ids: [for entry in outer: (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) ? "x" : "!"]]))))
+    condition     = can(regex("^x*$", join("", flatten([for outer in var.internal_subnet_ids : [for entry in outer : (coalesce(entry.subnet_id, "unspecified") == "unspecified" || can(regex("^(?:https://www\\.googleapis\\.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/regions/[a-z][a-z-]+[0-9]/subnetworks/[a-z]([a-z0-9-]{0,61}[a-z0-9])?$", entry.subnet_id))) && (coalesce(entry.private_ip_primary, "undefined") == "undefined" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", entry.private_ip_primary))) ? "x" : "!"]]))))
     error_message = "Each internal_subnet_ids entry must contain a fully-qualified subnet self-link, and valid or empty private IPv4 addresses."
   }
   default = [
@@ -133,7 +133,7 @@ EOD
 
 variable "f5_ssh_publickey" {
   type        = string
-  default = "~/.ssh/id_rsa.pub"
+  default     = "~/.ssh/id_rsa.pub"
   description = <<-EOD
 The path to the SSH public key to install on BIG-IP instances for admin access.
 EOD
@@ -161,11 +161,11 @@ variable "sleep_time" {
 
 variable "targets" {
   type = object({
-    groups = bool
+    groups    = bool
     instances = bool
   })
   default = {
-    groups = true
+    groups    = true
     instances = false
   }
   description = <<EOD

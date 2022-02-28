@@ -31,7 +31,7 @@ fileignoreconfig:
 - filename: test/ephemeral/ilb/main.tf
   checksum: ff2dec43996c8c0d0c11ca01728a4fd0bb2f86da67b8f6b672d3a32fae7fba63
 - filename: test/fixtures/examples/forwarding-rule/main.tf
-  checksum: d7c006a11ab19ff6d1f16c512e8829d2dada8b67297717e31485e40fe2a9de7b
+  checksum: a10f139463a809cd38092679cec2b6496245bdae0ccc79082a77c1dd847bbfa0
 - filename: test/fixtures/root/main.tf
   checksum: 3249f8cd42c0161e3b0142e2248d3347a40705d32d0c49b83b51845942ad21a2
 - filename: test/ephemeral/forwarding-rule/main.tf

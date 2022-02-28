@@ -11,13 +11,7 @@ for BIG-IP VMs that are utilizing CFE to manage GCP API objects on failover.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14.5 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | ~> 3.85 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | ~> 3.85 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 3.85 |
 
 ## Modules
 
@@ -34,12 +28,11 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_address"></a> [address](#input\_address) | The IPv4 address to use with the forwarding rule. | `string` | n/a | yes |
-| <a name="input_prefix"></a> [prefix](#input\_prefix) | The prefix to use when naming resources managed by this module. Must be RFC1035<br>compliant and between 1 and 48 characters in length, inclusive. | `string` | n/a | yes |
+| <a name="input_prefix"></a> [prefix](#input\_prefix) | The prefix to use when naming resources managed by this module. Must be RFC1035<br>compliant and between 1 and 52 characters in length, inclusive. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project identifier where the BIG-IP cluster will be created | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The compute region where where the forwarding-rules will be deployed. | `string` | n/a | yes |
 | <a name="input_targets"></a> [targets](#input\_targets) | The VM target instance self-links for the forwarding-rule(s). | `set(string)` | n/a | yes |
-| <a name="input_cfe"></a> [cfe](#input\_cfe) | The tag key:value to use for automatic CFE detection; if not empty (default), the<br>forwarding-rule descriptions will include the CFE and other labels for CFE<br>discovery. | <pre>object({<br>    key   = string<br>    value = string<br>  })</pre> | `null` | no |
+| <a name="input_address"></a> [address](#input\_address) | The IPv4 address to use with the forwarding rule. | `string` | `null` | no |
 | <a name="input_is_external"></a> [is\_external](#input\_is\_external) | A boolean flag to determine if the forwarding-rule will be for ingress from external<br>internet (default), or it it will be forwarding internal only traffic. | `bool` | `true` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | An optional map of string key:value pairs to assign to created resources. | `map(string)` | `{}` | no |
 | <a name="input_protocols"></a> [protocols](#input\_protocols) | The IP protocols that will be enabled in the forwarding rule(s); a rule will be<br>created for each protocol specified. NOTE: L3\_DEFAULT is only valid for an external<br>forwarding-rule instance (i.e. when is\_external = true).<br><br>Default value is ["TCP", "UDP"]. | `set(string)` | <pre>[<br>  "TCP",<br>  "UDP"<br>]</pre> | no |

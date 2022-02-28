@@ -50,7 +50,7 @@ variable "address" {
     condition     = coalesce(var.address, "unspecified") == "unspecified" || can(regex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", var.address))
     error_message = "The address must be a valid IPv4 address."
   }
-  default = null
+  default     = null
   description = <<-EOD
 The IPv4 address to use with the forwarding rule.
 EOD
