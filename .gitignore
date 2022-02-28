@@ -36,4 +36,5 @@ test/ephemeral
 test/reports/*
 !test/reports/.gitkeep
 test/setup/*-ssh*
+test/setup/harness.tfvars
 .kitchen
