@@ -32,6 +32,7 @@ terraform.tfvars.json
 Gemfile.lock
 
 # kitchen-terraform and test results
+test/ephemeral
 test/reports/*
 !test/reports/.gitkeep
 test/setup/*-ssh*
