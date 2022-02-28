@@ -1,5 +1,7 @@
 # BIG-IP HA on Google Cloud
 
+> NOTE: Pre-release module!
+
 This Terraform module will create two BIG-IP instances that will have the required
 infrastructure for high-availability using Device Groups and Failover Sync.
 
