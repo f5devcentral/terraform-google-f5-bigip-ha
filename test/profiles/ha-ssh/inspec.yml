@@ -1,0 +1,8 @@
+---
+name: ha-remote
+title: BIG-IP HA remote access via SSH verification
+maintainer: Matthew Emes <m.emes@f5.com>
+license: Apache-2.0
+version: 1.0.0
+supports:
+  platform: os

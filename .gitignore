@@ -30,3 +30,9 @@ terraform.tfvars.json
 # Ignore Gem lock and local bundle config
 .bundle
 Gemfile.lock
+
+# kitchen-terraform and test results
+test/reports/*
+!test/reports/.gitkeep
+test/setup/*-ssh*
+.kitchen

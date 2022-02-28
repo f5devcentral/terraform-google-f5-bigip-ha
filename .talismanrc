@@ -22,3 +22,29 @@ fileignoreconfig:
   checksum: cfa1975c20a979d689d9e5e1a40f7530debbc0147af79bb9b90d4a03bb55e509
 - filename: modules/nlb/README.md
   checksum: 2bd366c5ae0f2c49615d1d26f4e569010cec72170a339d516b53f3c2c84e58df
+- filename: test/ephemeral/nlb/main.tf
+  checksum: d98c7fdf09472add7b10dda84ebbd48cdc7035d3d4385557cac35a36a914cfd5
+- filename: test/fixtures/examples/ilb/main.tf
+  checksum: 276d52afec1333c803108d0c4dcf4b0d4c588bedd14bac468576f4baf54c5aab
+- filename: test/fixtures/examples/nlb/main.tf
+  checksum: 39459810437ebea07437bcebd440302a8ee28d77e8e0bf6067ba5ae705b7e4e0
+- filename: test/ephemeral/ilb/main.tf
+  checksum: ff2dec43996c8c0d0c11ca01728a4fd0bb2f86da67b8f6b672d3a32fae7fba63
+- filename: test/fixtures/examples/forwarding-rule/main.tf
+  checksum: d7c006a11ab19ff6d1f16c512e8829d2dada8b67297717e31485e40fe2a9de7b
+- filename: test/fixtures/root/main.tf
+  checksum: 3249f8cd42c0161e3b0142e2248d3347a40705d32d0c49b83b51845942ad21a2
+- filename: test/ephemeral/forwarding-rule/main.tf
+  checksum: 0deca9fe92f00e13e56d0993317ae5be914361a5098b16873c31a6ff5be33a91
+- filename: test/ephemeral/ilb/variables.tf
+  checksum: 97c5600be9fa18dc830199f15b560ed95d8a99ac479340d46d351089bf72a99b
+- filename: test/setup/README.md
+  checksum: d26daed4a5b1c11cb7d7521ee1e17c15925adc25dff63930bf2514bf3eea5530
+- filename: kitchen.yml
+  checksum: 4551ee9c05ff63701ebde577ba10be326ab864d6ab7da6e202f342c9f79d2e9a
+- filename: test/ephemeral/nlb/variables.tf
+  checksum: a0bed9c97d0e935b7adfcb14c44a5f69035cb79c1c2730a1a9e0ab0a11d17f3d
+- filename: test/ephemeral/forwarding-rule/variables.tf
+  checksum: fd1ea303d44538ab0e408e93b87f675b8551cbcf404c14a9b8e5c37679f3892c
+- filename: test/setup/main.tf
+  checksum: 5d6ae889dc5d7aaf9a4e5ba20352888ed6266d40b672e758408c04012d1294dd
