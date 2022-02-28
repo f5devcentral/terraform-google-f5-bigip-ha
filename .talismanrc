@@ -14,3 +14,11 @@ fileignoreconfig:
   checksum: b4d7c2a32d1556051eecd06f286e4d7b9e2f5553d6a813fe363c7421b2035bf4
 - filename: modules/ilb/README.md
   checksum: 03273507ad6aa89211ffe3765cb63d7d907a2e7b1528ccac9a0ff908a8c903b0
+- filename: examples/nlb/main.tf
+  checksum: cdee99ecd954c581ba702856aaa8da30285145515012e8414560f2e8403e017b
+- filename: modules/nlb/variables.tf
+  checksum: 57b22d95dcd3460c99636e2bbe5a8ebe289b84e941b0d85954c3e0a037eaba5b
+- filename: examples/nlb/variables.tf
+  checksum: cfa1975c20a979d689d9e5e1a40f7530debbc0147af79bb9b90d4a03bb55e509
+- filename: modules/nlb/README.md
+  checksum: 2bd366c5ae0f2c49615d1d26f4e569010cec72170a339d516b53f3c2c84e58df
