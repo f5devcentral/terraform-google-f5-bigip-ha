@@ -6,3 +6,11 @@ fileignoreconfig:
   checksum: f4c7d8c4b7c5430e4ee4ebd049c84f2620675781fba39c57f6c5b2c2495aa041
 - filename: README.md
   checksum: 16f5aa6d7b89f6424f889dd6e00dc6bf13dcc0bf7d32e9c3746cb4f6d54869a2
+- filename: examples/ilb/main.tf
+  checksum: ea0852afb2da72e64a7d73d40acdb051f85fac9e78e20ce68d6244a2bda67534
+- filename: modules/ilb/variables.tf
+  checksum: c91f7ebc143ccd1c22d2ed6385d0de9b41f08f979512da4f64e54f9b0a7a800f
+- filename: examples/ilb/variables.tf
+  checksum: b4d7c2a32d1556051eecd06f286e4d7b9e2f5553d6a813fe363c7421b2035bf4
+- filename: modules/ilb/README.md
+  checksum: 03273507ad6aa89211ffe3765cb63d7d907a2e7b1528ccac9a0ff908a8c903b0
