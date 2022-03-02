@@ -147,7 +147,7 @@ bigip_versions.each do |bigip|
   end
   ['ilb', 'nlb', 'forwarding-rule'].each do |example|
     test_name = sprintf('ex-%s-%s-3nic-public-mgmt', example[0, 3], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
-    test_prefix = sprintf('e%s-3n-pub', example[0, 3], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
+    test_prefix = sprintf('e%s-%s-3n-pub', example[0, 3], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
 %>
   - name: <%= test_name %>
     driver:
