@@ -4,6 +4,54 @@ This helper module will create a [Forwarding Rule](https://cloud.google.com/load
 that will direct TCP and/or UDP traffic to a single VM, and is typically used
 for BIG-IP VMs that are utilizing CFE to manage GCP API objects on failover.
 
+## Example: TCP and UDP external rule
+
+```hcl
+module "tcp_udp_nlb" {
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/forwarding-rule"
+  project_id             = var.project_id
+  region                 = var.region
+  subnet                 = var.external_subnet
+  prefix                 = "ext-tcp-udp"
+  instance_groups        = module.bigip-cluster.target_instances
+  address                = var.reserved_external_address
+}
+```
+
+## Example: TCP-only load balancing
+
+```hcl
+module "tcp_nlb" {
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/forwarding-rule"
+  project_id             = var.project_id
+  region                 = var.region
+  subnet                 = var.external_subnet
+  prefix                 = "ext-tcp"
+  instance_groups        = module.bigip-cluster.target_instances
+  address                = var.reserved_external_address
+  protocols              = [
+    "TCP",
+  ]
+}
+```
+
+## Example: TCP, UDP, ESP, and ICMP load balancing
+
+```hcl
+module "l3_default_nlb" {
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/forwarding-rule"
+  project_id             = var.project_id
+  region                 = var.region
+  subnet                 = var.external_subnet
+  prefix                 = "ext-l3"
+  instance_groups        = module.bigip-cluster.target_instances
+  address                = var.reserved_external_address
+  protocols              = [
+    "L3_DEFAULT",
+  ]
+}
+```
+
 <!-- markdownlint-disable no-inline-html no-bare-urls -->
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements

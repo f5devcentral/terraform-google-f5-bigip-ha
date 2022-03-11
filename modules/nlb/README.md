@@ -16,7 +16,7 @@ constitute the instance groups.
 
 ```hcl
 module "tcp_udp_nlb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/nlb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/nlb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.external_subnet
@@ -31,7 +31,7 @@ module "tcp_udp_nlb" {
 
 ```hcl
 module "tcp_nlb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/nlb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/nlb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.external_subnet
@@ -49,7 +49,7 @@ module "tcp_nlb" {
 
 ```hcl
 module "l3_default_nlb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/nlb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/nlb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.external_subnet

@@ -39,7 +39,7 @@ locals {
 }
 
 module "test" {
-  source              = "./../../../ephemeral/forwarding-rule/"
+  source              = "./../../../ephemeral/ha-via-api/"
   prefix              = local.prefix
   project_id          = var.project_id
   zones               = var.zones

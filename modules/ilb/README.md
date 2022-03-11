@@ -9,7 +9,7 @@ to VM interfaces other than NIC0.
 
 ```hcl
 module "tcp_udp_ilb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/ilb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/ilb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.internal_subnet
@@ -24,7 +24,7 @@ module "tcp_udp_ilb" {
 
 ```hcl
 module "tcp_ilb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/ilb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/ilb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.internal_subnet
@@ -45,7 +45,7 @@ for details.
 
 ```hcl
 module "global_ilb" {
-  source                 = "github.com/f5devcentral/terraform-gcp-f5-sca//modules/cluster/ilb"
+  source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/ilb"
   project_id             = var.project_id
   region                 = var.region
   subnet                 = var.internal_subnet

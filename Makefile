@@ -47,7 +47,7 @@ converge.%: test/setup/harness.tfvars
 converge: test/setup/harness.tfvars
 	kitchen converge
 
-EXAMPLES=ilb nlb forwarding-rule
+EXAMPLES=ha-via-api ha-via-lb sandwich
 
 test/setup/harness.tfvars: $(wildcard test/setup/*.tf) $(wildcard test/setup/*.auto.tfvars) $(wildcard test/setup/terraform.tfvars) $(addprefix test/ephemeral/,$(addsuffix /main.tf,$(EXAMPLES)))
 	terraform -chdir=test/setup init -input=false
@@ -68,7 +68,7 @@ test/ephemeral/%/main.tf: $(wildcard examples/%/*.tf)
 
 .PHONY: clean
 clean: $(wildcard test/setup/harness.tfvars)
-	if test -n "$<" && test -f "$<"; then kitchen destroy; fi
+	-if test -n "$<" && test -f "$<"; then kitchen destroy; fi
 	if test -n "$<" && test -f "$<"; then terraform -chdir=$(<D) destroy -auto-approve; fi
 
 .PHONY: realclean
@@ -94,8 +94,8 @@ realclean: clean
 tag.%:
 	@echo '$*' | grep -Eq '^v(?:[0-9]+\.){2}[0-9]+$$' || \
 		(echo "Tag doesn't meet requirements"; exit 1)
-	# @test "$(shell git status --porcelain | wc -l | grep -Eo '[0-9]+')" == "0" || \
-	# 	(echo "Git tree is unclean"; exit 1)
+	@test "$(shell git status --porcelain | wc -l | grep -Eo '[0-9]+')" == "0" || \
+		(echo "Git tree is unclean"; exit 1)
 	@find examples -type f -name main.tf -print0 | \
 		xargs -0 awk 'BEGIN{m=0;s=0}; /module "ha"/ {m=1}; m==1 && /source[ \t]*=[ \t]*"(https:\/\/)?github.com\/f5devcentral\/terraform-google-f5-bigip-ha\?ref=$*/ {s++}; END{if (s==0) { printf "%s has incorrect ha source\n", FILENAME; exit 1}}'
 	@find examples -type f -name main.tf -print0 | \
@@ -107,4 +107,4 @@ tag.%:
 		(echo "test/profiles/ha-gce/inspec.yml has incorrect tag"; exit 1)
 	@grep -Eq '^version:[ \t]*$(subst .,\.,$(*:v%=%))[ \t]*$$' test/profiles/ha-ssh/inspec.yml || \
 		(echo "test/profiles/ha-ssh/inspec.yml has incorrect tag"; exit 1)
-	echo git tag -am 'Tagging release $*' $*
+	git tag -am 'Tagging release $*' $*

@@ -48,3 +48,5 @@ fileignoreconfig:
   checksum: fd1ea303d44538ab0e408e93b87f675b8551cbcf404c14a9b8e5c37679f3892c
 - filename: test/setup/main.tf
   checksum: 5d6ae889dc5d7aaf9a4e5ba20352888ed6266d40b672e758408c04012d1294dd
+- filename: examples/sandwich/main.tf
+  checksum: 48c5e17a44f7f261ec58c209fcb79803d515c89073a74e3c2455870c6b539e9a

@@ -13,6 +13,14 @@ locals {
   region = distinct([for zone in var.zones : regex("^([a-z]{2,}-[a-z]+[0-9])-[a-z]$", zone)[0]])[0]
 }
 
+resource "google_compute_address" "ext" {
+  project      = var.project_id
+  name         = format("%s-ext", var.prefix)
+  description  = "Static IP address for BIG-IP public ingress via NLB"
+  address_type = "EXTERNAL"
+  region       = local.region
+}
+
 module "ha" {
   source                            = "github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v1.0.0"
   prefix                            = var.prefix
@@ -38,6 +46,7 @@ module "nlb" {
   source                 = "github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/nlb?ref=v1.0.0"
   prefix                 = var.prefix
   project_id             = var.project_id
+  address                = google_compute_address.ext.address
   region                 = local.region
   instance_groups        = module.ha.target_groups
   labels                 = var.labels

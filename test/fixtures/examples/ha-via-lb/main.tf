@@ -39,7 +39,7 @@ locals {
 }
 
 module "test" {
-  source              = "./../../../ephemeral/ilb/"
+  source              = "./../../../ephemeral/ha-via-lb/"
   prefix              = local.prefix
   project_id          = var.project_id
   zones               = var.zones

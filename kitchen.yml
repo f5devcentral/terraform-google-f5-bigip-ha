@@ -145,13 +145,17 @@ bigip_versions.each do |bigip|
             - yaml:<%= report_dir %>/<%= report_ts %>/<%= test_name %>-atc-1.yaml
 <%
   end
-  ['ilb', 'nlb', 'forwarding-rule'].each do |example|
-    test_name = sprintf('ex-%s-%s-3nic-public-mgmt', example[0, 3], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
-    test_prefix = sprintf('e%s-%s-3n-pub', example[0, 3], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
+  [
+    { :name => 'ha-via-api', :short => 'cfe'},
+    { :name => 'ha-via-lb', :short => 'lb'},
+    { :name => 'sandwich', :short => 'blt'},
+  ].each do |example|
+    test_name = sprintf('ex-%s-%s-3nic-public-mgmt', example[:short], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
+    test_prefix = sprintf('%s-%s-3n-pub', example[:short], bigip[:version].gsub(/[^A-Za-z0-9]/, '-'))
 %>
   - name: <%= test_name %>
     driver:
-      root_module_directory: test/fixtures/examples/<%= example %>
+      root_module_directory: test/fixtures/examples/<%= example[:name] %>
       variables:
         test_prefix: <%= test_prefix %>
         image: '<%= bigip[:image] %>'
