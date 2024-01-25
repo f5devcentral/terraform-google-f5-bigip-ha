@@ -1,4 +1,6 @@
+# spell-checker: disable
 ---
+version: "1.0"
 fileignoreconfig:
 - filename: main.tf
   checksum: bed85fab1bfb62455c93d17a1786f5335a0c13acd7434fec5405c4e2bf010f5c

@@ -1,6 +1,6 @@
-# These github actions will update Terraform section(s) of README(s), and
-# perform linting using pre-commit.
+# These github actions will perform linting using pre-commit.
 # yamllint disable rule:line-length
+# spell-checker: disable
 ---
 name: pre-commit
 
@@ -8,27 +8,31 @@ name: pre-commit
 on:
   pull_request:
   push:
-    branches: [main]
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
-    env:
-      BUNDLE_WITH: dev
     steps:
-      - uses: actions/checkout@v2
-      - name: Install talisman
+      - uses: actions/checkout@v4
+      - name: install talisman
         run: |
-          sudo curl -sLo /usr/local/bin/talisman https://github.com/thoughtworks/talisman/releases/download/v1.23.0/talisman_linux_amd64
+          sudo curl -sLo /usr/local/bin/talisman https://github.com/thoughtworks/talisman/releases/download/v1.32.0/talisman_linux_amd64
           sudo chmod 0755 /usr/local/bin/talisman
       - name: Install terraform-docs
         run: |
-          sudo curl -sLo /tmp/terraform-docs.tar.gz https://github.com/segmentio/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz
-          sudo tar xzf /tmp/terraform-docs.tar.gz -C /usr/local/bin/
+          sudo sh -c 'curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-linux-amd64.tar.gz | tar xzf - -C /usr/local/bin'
           sudo chmod 0755 /usr/local/bin/terraform-docs
-      - uses: actions/setup-python@v2
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.0.2
+          ruby-version: '3.3.0'
           bundler-cache: true
-      - uses: pre-commit/action@v2.0.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: pre-commit/action@v3.0.0
