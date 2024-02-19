@@ -31,7 +31,7 @@ module "instances" {
     internal_subnet_ids = element(var.internal_subnet_ids, i)
   } }
   source                            = "F5Networks/bigip-module/gcp"
-  version                           = "1.1.0"
+  version                           = "1.1.19"
   prefix                            = var.prefix
   project_id                        = var.project_id
   zone                              = each.value.zone
