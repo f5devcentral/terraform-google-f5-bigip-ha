@@ -1,0 +1,61 @@
+[project]
+name = "terraform-google-f5-bigip-ha"
+version = "0.0.1"
+description = "Test harness for Terraform/Tofu module"
+readme = "README.md"
+requires-python = ">=3.12"
+# spell-checker: disable
+dependencies = [
+    "google-cloud-compute>=1.40.0",
+    "pytest-cov>=7.0.0",
+    "pytest-testinfra>=10.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "pyright[nodejs]>=1.1.406",
+    "ruff>=0.14.1",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = []
+select = ["ALL"]
+extend-select = ["I"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+# Allow assert and don't complain about implicit namespaces or too many arguements for tests.
+"**/tests/**/*" = ["S", "INP", "PLR0913"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.coverage.paths]
+source = ["tests"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.run]
+branch = true
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib --cov=tests --cov-report=term-missing"
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(asctime)s - %(levelname)s:%(name)s:%s(message)"
+log_cli_date_format = "%Y-%m-%dT%H:%M:%S%z"
+testpaths = ["tests"]

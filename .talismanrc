@@ -76,3 +76,7 @@ fileignoreconfig:
     - filecontent
 - filename: modules/template/main.tf
   checksum: f6848bddfc477114afa0e5ecac62fcc26b645d3546627b5115697ebfa9923830
+- filename: uv.lock
+  checksum: 9d7ae04e263e4d7bed6e16388dddbf1440777ef2bfef5409624cea2ee51d9c30
+  ignore_detectors:
+    - filecontent

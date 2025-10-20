@@ -18,21 +18,34 @@ permissions:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    env:
+      TALISMAN_VERSION: 1.37.0
+      TFDOCS_VERSION: 0.20.0
+      TFLINT_VERSION: 0.59.1
+      TOFU_VERSION: 1.10.6
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install talisman
         run: |
-          sudo curl -sLo /usr/local/bin/talisman https://github.com/thoughtworks/talisman/releases/download/v1.32.0/talisman_linux_amd64
+          sudo curl -sLo /usr/local/bin/talisman https://github.com/thoughtworks/talisman/releases/download/v${{ env.TALISMAN_VERSION }}/talisman_linux_amd64
           sudo chmod 0755 /usr/local/bin/talisman
       - name: Install terraform-docs
         run: |
-          sudo sh -c 'curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.18.0/terraform-docs-v0.18.0-linux-amd64.tar.gz | tar xzf - -C /usr/local/bin'
+          sudo sh -c 'curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v${{ env.TFDOCS_VERSION }}/terraform-docs-v${{ env.TFDOCS_VERSION }}-linux-amd64.tar.gz | tar xzf - -C /usr/local/bin'
           sudo chmod 0755 /usr/local/bin/terraform-docs
-      - uses: ruby/setup-ruby@v1
+      - name: Install tflint
+        run: |
+          curl -sLO https://github.com/terraform-linters/tflint/releases/download/v${{ env.TFLINT_VERSION }}/tflint_linux_amd64.zip
+          unzip tflint_linux_amd64.zip && rm tflint_linux_amd64.zip
+          sudo mv tflint /usr/local/bin/tflint
+          sudo chmod 0755 /usr/local/bin/tflint
+      - name: install opentofu
+        run: |
+          sudo sh -c 'curl -sL https://github.com/opentofu/opentofu/releases/download/v${{ env.TOFU_VERSION }}/tofu_${{ env.TOFU_VERSION }}_linux_amd64.tar.gz | tar xzf - -C /usr/local/bin tofu'
+          sudo chmod 0755 /usr/local/bin/tofu
+      - uses: actions/setup-python@v6
         with:
-          ruby-version: '3.3.1'
-          bundler-cache: true
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+          python-version-file: ".python-version"
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --all-extras --dev
       - uses: pre-commit/action@v3.0.1

@@ -2,6 +2,7 @@
 .envrc
 .direnv
 .tool-versions
+.env
 
 # Ignore Terraform plugin/module cache and local state files
 .terraform
@@ -26,6 +27,7 @@ terraform.tfvars
 terraform.tfvars.json
 *.auto.tfvars
 *.auto.tfvars.json
+!terraform.tfvars.example
 
 # Ignore Gem lock and local bundle config
 .bundle
@@ -38,3 +40,10 @@ test/reports/*
 test/setup/*-ssh*
 test/setup/harness.tfvars
 .kitchen
+
+# Ignore local venv and ephemeral python resources
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+.coverage*
