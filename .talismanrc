@@ -80,3 +80,5 @@ fileignoreconfig:
   checksum: 9d7ae04e263e4d7bed6e16388dddbf1440777ef2bfef5409624cea2ee51d9c30
   ignore_detectors:
     - filecontent
+- filename: .yamllint.yaml
+  checksum: 31f2487991ae12b20e7f4e98606a472e5ce53044689946c9484b07002ed568b5

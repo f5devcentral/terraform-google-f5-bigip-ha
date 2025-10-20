@@ -2,5 +2,8 @@
 extends: default
 ignore:
   - modules/template/templates/cloud-config.yaml
-  - test/fixtures/root/templates/runtime-init-config.yaml
-  - test/fixtures/stateless/templates/runtime-init-config.yaml
+  - tests/fixtures/root/templates/runtime-init-config.yaml
+  - tests/fixtures/stateless/templates/runtime-init-config.yaml
+rules:
+  line-length:
+    max: 120

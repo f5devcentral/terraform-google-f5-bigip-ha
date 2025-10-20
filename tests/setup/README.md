@@ -29,7 +29,7 @@ admin_source_cidrs = [
 ```
 
 <!-- markdownlint-disable MD033 MD034 -->
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -77,9 +77,9 @@ admin_source_cidrs = [
 
 | Name | Description |
 |------|-------------|
-| <a name="output_harness_tfvars"></a> [harness\_tfvars](#output\_harness\_tfvars) | The name of the generated harness.tfvars file that will be a common input to all<br>test fixtures. |
+| <a name="output_harness_tfvars"></a> [harness\_tfvars](#output\_harness\_tfvars) | The name of the generated harness.tfvars file that will be a common input to all<br/>test fixtures. |
 | <a name="output_prefix"></a> [prefix](#output\_prefix) | n/a |
-| <a name="output_ssh_privkey_path"></a> [ssh\_privkey\_path](#output\_ssh\_privkey\_path) | The full path to the private SSH key that will be used to verify remote shell<br>access. |
+| <a name="output_ssh_privkey_path"></a> [ssh\_privkey\_path](#output\_ssh\_privkey\_path) | The full path to the private SSH key that will be used to verify remote shell<br/>access. |
 | <a name="output_subnets"></a> [subnets](#output\_subnets) | n/a |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
 <!-- markdownlint-enable MD033 MD034 -->
