@@ -1,4 +1,3 @@
-
 plugin "terraform" {
   enabled = true
   preset  = "recommended"
@@ -6,6 +5,6 @@ plugin "terraform" {
 
 plugin "google" {
   enabled = true
-  version = "0.35.0"
+  version = "0.38.0"
   source  = "github.com/terraform-linters/tflint-ruleset-google"
 }

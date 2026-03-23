@@ -1,43 +1,50 @@
 {
-    "name": "memes-terraform-google-f5-bigip-ha",
-    "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+    "name": "f5devcentral-terraform-google-f5-bigip-ha",
+    "image": "mcr.microsoft.com/devcontainers/python:3.13-trixie",
     "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "moby": false
+        },
         "ghcr.io/memes/devcontainers-features/direnv:1": {},
         "ghcr.io/memes/devcontainers-features/google-cloud-cli:1": {},
         "ghcr.io/memes/devcontainers-features/opentofu:1": {
-            "version": "1.10.6"
+            "version": "1.11.5"
         },
         "ghcr.io/memes/devcontainers-features/starship:1": {},
         "ghcr.io/memes/devcontainers-features/talisman:1": {
             "version": "1.37.0"
         },
         "ghcr.io/memes/devcontainers-features/terraform-docs:1": {
-            "version": "0.20.0"
+            "version": "0.21.0"
         },
         "ghcr.io/memes/devcontainers-features/tflint:1": {
-            "version": "0.59.1"
+            "version": "0.61.0"
         }
     },
     "customizations": {
         "vscode": {
             "extensions": [
                 "Gruntfuggly.todo-tree",
-                "ms-python.vscode-pylance",
                 "ms-python.python",
                 "ms-python.debugpy",
                 "ms-python.vscode-python-envs",
                 "redhat.vscode-yaml",
                 "streetsidesoftware.code-spell-checker",
-                "tamasfe.event-better-toml",
+                "tamasfe.even-better-toml",
                 "opentofu.vscode-opentofu",
                 "esbenp.prettier-vscode",
                 "DavidAnson.vscode-markdownlint",
                 "hashicorp.hcl",
-                "charliermarsh.ruff"
-            ]
+                "charliermarsh.ruff",
+                "astral-sh.ty"
+            ],
+            "settings": {
+                "python.languageServer": "None"
+            }
         }
     },
     "onCreateCommand": {
+        "install-deps": "sudo sh -c 'apt update && apt install -y --no-install-recommends shellcheck && rm -rf /var/lib/apt/lists/*'",
         "install-uv": ["/usr/local/py-utils/bin/pipx", "install", "uv"],
         "modify-default-omz-plugins": ["/usr/bin/sed", "-i.onCreateCommand" , "-e", "/^plugins=/c\\plugins=(git dotenv)", "/home/vscode/.zshrc"]
     },

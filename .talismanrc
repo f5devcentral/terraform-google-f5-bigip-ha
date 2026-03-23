@@ -3,7 +3,7 @@
 version: "1.0"
 fileignoreconfig:
 - filename: main.tf
-  checksum: 1fdc8670569f2adb66ca951b252c5e915bcc4e413e5bd311641d52caaacf7ebb
+  checksum: 6aa8946162bf3213627fe920c9d2b6e320602dc7ec3088f255180145f2930c25
 - filename: variables.tf
   ignore_detectors:
     - filecontent
@@ -63,22 +63,24 @@ fileignoreconfig:
 - filename: test/fixtures/stateless/templates/runtime-init-config.yaml
   checksum: 4f0ee6ac5145def1f272e2811acaa43eac308bed8a11a958e80c90ba20dc6fda
 - filename: modules/stateless/README.md
-  checksum: 085294c5d5a8878b7d3e8e6097c59adfc49d7c62a448b34101f2532250d9c583
+  checksum: 92cd7911f218cecc4eec86d2b656e8ac89aa4a9ebe4caa25778525307fa8eddc
 - filename: modules/template/README.md
-  checksum: 4ebb0e1f64452a5a515f04922346bea4fe27c8394434b30a0c767041a0bd111c
+  checksum: fc62a2493283f200e85527e641e36373aa70d67f312131ca5148afcefe57c4dd
 - filename: modules/stateless/variables.tf
-  checksum: 44ca820ba3e3c890e9e849376be626015186191deb44e128336b158929e9762a
+  checksum: aa4c396c7003986bca8074ef7f041fbccb04110102743597bd5e21cdd355e673
 - filename: modules/template/variables.tf
-  checksum: 57257d9795189df35fa39d3f784bb0427f65b7bcf172e02a781866f8794223c5
+  checksum: 07a720b96d01be8aa19c9806312ec5fe744cf92a1f937e88a05b236e819960b0
 - filename: test/fixtures/stateless/main.tf
   checksum: 57579721571d977bb34718dfbf66fba6cce6871caa5d942f7843859b5b554764
   ignore_detectors:
     - filecontent
 - filename: modules/template/main.tf
-  checksum: f6848bddfc477114afa0e5ecac62fcc26b645d3546627b5115697ebfa9923830
+  checksum: 598113cc18a6861c76ce741c7601464a695f957a4656bd680a36f45be7fd1b84
 - filename: uv.lock
   checksum: 9d7ae04e263e4d7bed6e16388dddbf1440777ef2bfef5409624cea2ee51d9c30
   ignore_detectors:
     - filecontent
 - filename: .yamllint.yaml
   checksum: 31f2487991ae12b20e7f4e98606a472e5ce53044689946c9484b07002ed568b5
+- filename: modules/template/files/onboard.sh
+  checksum: ea08a0bebf08369814aba3463a24804134c2f433f4079cb450d869dce0dae507
