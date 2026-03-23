@@ -1,8 +1,0 @@
----
-name: stateful-remote
-title: Stateful BIG-IP HA remote access via SSH verification
-maintainer: Matthew Emes <m.emes@f5.com>
-license: Apache-2.0
-version: 0.2.0
-supports:
-  platform: os
