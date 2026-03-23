@@ -4,9 +4,8 @@ about: Create a report to help us improve
 title: ''
 labels: 'bug'
 assignees: ''
-
 ---
-
+<!-- markdownlint-disable first-line-heading -->
 Hello and thank you for using our Terraform module examples. Please complete this
 form and we'll try to address the issue.
 
@@ -14,6 +13,12 @@ form and we'll try to address the issue.
 
 What is the problem you are seeing? Is it consistent or occasional? Please
 provide as much detail as possible.
+
+## Modules used
+
+* [x] Stateful HA module (default)
+* [ ] Template module - used with stateless module or stateful MIG example
+* [ ] Stateless HA module
 
 ## GCP environment
 
@@ -27,7 +32,6 @@ Any other details we need to know?
 ## Reproducing the issue
 
 How can we reproduce this behaviour? Which version of F5's product was used?
-
 
 ## Additional context
 
