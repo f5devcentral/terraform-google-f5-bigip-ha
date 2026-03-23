@@ -84,3 +84,21 @@ fileignoreconfig:
   checksum: 31f2487991ae12b20e7f4e98606a472e5ce53044689946c9484b07002ed568b5
 - filename: modules/template/files/onboard.sh
   checksum: ea08a0bebf08369814aba3463a24804134c2f433f4079cb450d869dce0dae507
+- filename: tests/stateless/files/runtime-init-conf-1nic.yaml
+  checksum: 1a55a265e745039bbf652777ea634f9757534502fa3807aea789759dbaff9b69
+- filename: tests/files/runtime-init-conf.yaml
+  checksum: ea24b6e6e4e64a9db783374b3aeca6f9d277da31ce885a1355eefc17ddd4714b
+- filename: tests/stateless/files/runtime-init-conf.yaml
+  checksum: ebe508d7833d2e675cf97fc305f90cb063975e7f1445546cf6cf5870d92423b5
+- filename: tests/template/test_all_options.py
+  checksum: cfc824123f48afde8996708a6a219d24d5bec2e858784ef5bde580998e9b148d
+- filename: tests/stateless/__init__.py
+  checksum: 542c3d34c12712ff90073c194da8ea48026bac8a6274c947fbd99a14896b96de
+- filename: tests/test_combos.py
+  checksum: 0d5826118dec9f5de527046e7fe214812189a308897202caa51ad0195f695bc2
+- filename: tests/__init__.py
+  checksum: 1d6f42b6c869ee9ba0be7e74e7498d9c9f17f92ebcf942cbaf1c5cbb8bb2bb65
+- filename: tests/conftest.py
+  checksum: 04d59f80f1940b02be011ed7f21aa8c5f22cbc3ff8a27e74433831b813ff2b08
+- filename: tests/stateless/test_combos.py
+  checksum: 998f1b5a997734c951e2a8e7f6eea725b99e81cddcb248aa8028dcdb1207ddf6
