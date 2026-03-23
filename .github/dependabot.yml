@@ -1,18 +1,22 @@
 ---
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: devcontainers
+    directory: /
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "terraform"
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: terraform
     directories:
-      - "/"
-      - "/modules/stateless"
-      - "/modules/template"
+      - /
+      - /modules/stateless
+      - /modules/template
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "uv"
-    directory: "/"
+      interval: weekly
+  - package-ecosystem: uv
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly

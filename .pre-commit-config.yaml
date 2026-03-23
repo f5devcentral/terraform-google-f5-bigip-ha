@@ -2,14 +2,14 @@
 ---
 repos:
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         files: \.(yml|yaml|talismanrc)$
         types: [file, yaml]
         entry: yamllint --strict
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.1
+    rev: v0.15.7
     hooks:
       - id: ruff-check
         args:
@@ -17,16 +17,20 @@ repos:
           - --exit-non-zero-on-fix
       - id: ruff-format
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.18.1
+    rev: v0.22.0
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.102.0
+    rev: v1.105.0
     hooks:
       - id: terraform_fmt
       - id: terraform_docs
         args: ['--args=--sort-by=required --hide=providers']
       - id: terraform_tflint
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.11.0
+    hooks:
+      - id: shellcheck
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -39,11 +43,15 @@ repos:
           - -b
           - main
       - id: trailing-whitespace
-  - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.406
-    hooks:
-      - id: pyright
   - repo: https://github.com/thoughtworks/talisman
     rev: v1.37.0
     hooks:
       - id: talisman-commit
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uv run ty check
+        language: python
+        types: [python]
+        pass_filenames: true
