@@ -9,7 +9,3 @@ output "id" {
 output "name" {
   value = google_compute_instance_template.bigip.name
 }
-
-output "metadata" {
-  value = local.metadata
-}

@@ -1,23 +1,15 @@
 terraform {
-  required_version = ">= 1.2"
+  required_version = ">= 1.5"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 5.0"
+      version = ">= 7.1"
     }
   }
 }
 
-data "google_compute_subnetwork" "mgmt" {
-  self_link = var.mgmt_interface.subnet_id
-}
-
-data "google_compute_subnetwork" "external" {
-  self_link = var.external_interface.subnet_id
-}
-
-data "google_compute_subnetwork" "internal" {
-  for_each  = { for i, v in var.internal_interfaces == null ? [] : var.internal_interfaces : "${i}" => v.subnet_id }
+data "google_compute_subnetwork" "subnets" {
+  for_each  = var.interfaces == null ? {} : { for i, v in var.interfaces : tostring(i) => v.subnet_id }
   self_link = each.value
 }
 
@@ -28,19 +20,30 @@ data "google_compute_image" "bigip" {
 }
 
 locals {
+  region                   = one(distinct([for subnet in data.google_compute_subnetwork.subnets : subnet.region]))
+  runtime_init_config_file = format("/config/cloud/runtime-init-conf.%s", can(jsondecode(var.runtime_init_config)) ? "json" : "yaml")
   user_data = templatefile(format("%s/templates/cloud-config.yaml", path.module), {
-    runtime_init_url       = try(var.runtime_init_installer.url, "")
-    runtime_init_sha256sum = try(var.runtime_init_installer.sha256sum, "")
-    runtime_init_installer_args = trimspace(join(" ", concat([
-      "--cloud gcp",
-      try(var.runtime_init_installer.skip_toolchain_metadata_sync, false) ? "--skip-toolchain-metadata-sync" : "",
-      try(var.runtime_init_installer.skip_verify, false) ? "--skip-verify" : "",
-      coalesce(try(var.runtime_init_installer.verify_gpg_key_url, "unspecified"), "unspecified") != "unspecified" ? format("--key %s", var.runtime_init_installer.verify_gpg_key_url) : "",
-    ])))
-    runtime_init_extra_args = trimspace(join(" ", concat([
-      try(var.runtime_init_installer.skip_telemetry, false) ? "--skip-telemetry" : "",
-    ])))
-    runtime_init_config = var.runtime_init_config
+    onboard_sh                = base64gzip(file(format("%s/files/onboard.sh", path.module)))
+    reset_management_route_sh = base64gzip(file(format("%s/files/reset_management_route.sh", path.module)))
+    onboard_env = {
+      MGMT_INTERFACE         = var.management_interface_index
+      RUNTIME_INIT_URL       = try(var.runtime_init_installer.url, "")
+      RUNTIME_INIT_SHA256SUM = try(var.runtime_init_installer.sha256sum, "")
+      RUNTIME_INIT_INSTALLER_EXTRA_ARGS = trimspace(join(" ", compact(concat([
+        try(var.runtime_init_installer.skip_toolchain_metadata_sync, false) ? "--skip-toolchain-metadata-sync" : "",
+        try(var.runtime_init_installer.skip_verify, false) ? "--skip-verify" : "",
+        coalesce(try(var.runtime_init_installer.verify_gpg_key_url, "unspecified"), "unspecified") != "unspecified" ? format("--key %s", var.runtime_init_installer.verify_gpg_key_url) : "",
+      ]))))
+      RUNTIME_INIT_EXTRA_ARGS = trimspace(join(" ", compact(concat([
+        try(var.runtime_init_installer.skip_telemetry, false) ? "--skip-telemetry" : "",
+      ]))))
+      RUNTIME_INIT_CONFIG_FILE = local.runtime_init_config_file
+    }
+    reset_management_route_env = {
+      MGMT_INTERFACE = var.management_interface_index
+    }
+    runtime_init_config_file = local.runtime_init_config_file
+    runtime_init_config      = var.runtime_init_config
   })
   metadata = var.metadata == null ? {
     user-data = local.user_data
@@ -48,18 +51,34 @@ locals {
       user-data = local.user_data
   }, var.metadata)
   # Official published images have a common naming convention that can be used to infer the release
-  inferred_version = element(coalescelist(regexall("/f5-bigip-((?:[0-9]{1,2}-){5,6}[0-9]+)-[^0-9].*$", data.google_compute_image.bigip.name), ["unknown-version"]), 0)
+  inferred_version = can(regex("f5-bigip-([12][0-9])-([0-9]+)-([0-9]+)-", data.google_compute_image.bigip.name)) ? format("v%s", join(".", regex("f5-bigip-([12][0-9])-([0-9]+)-([0-9]+)-", data.google_compute_image.bigip.name))) : "unknown version"
 }
 
 
 resource "google_compute_instance_template" "bigip" {
   project              = var.project_id
   name_prefix          = var.prefix
-  description          = format("%d-nic BIG-IP instance template for %s", 2 + try(length(var.internal_interfaces), 0), local.inferred_version)
-  instance_description = format("%d-nic BIG-IP instance", 2 + try(length(var.internal_interfaces), 0))
-  region               = data.google_compute_subnetwork.mgmt.region
+  description          = coalesce(var.description, format("%d-nic BIG-IP instance template for %s", length(data.google_compute_subnetwork.subnets), local.inferred_version))
+  instance_description = coalesce(var.instance_description, format("%d-nic BIG-IP %s", length(data.google_compute_subnetwork.subnets), local.inferred_version))
+  region               = local.region
   labels               = var.labels
   metadata             = local.metadata
+  machine_type         = var.machine_type
+  min_cpu_platform     = var.min_cpu_platform
+
+  scheduling {
+    automatic_restart   = var.preemptible ? false : var.automatic_restart
+    on_host_maintenance = var.preemptible ? "TERMINATE" : "MIGRATE"
+    preemptible         = var.preemptible
+  }
+
+  service_account {
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
+  }
+
   disk {
     device_name  = "boot-disk"
     auto_delete  = true
@@ -73,47 +92,16 @@ resource "google_compute_instance_template" "bigip" {
   can_ip_forward = true
   tags           = var.network_tags
 
-  # External interface is on nic0
-  network_interface {
-    subnetwork = data.google_compute_subnetwork.external.self_link
-    dynamic "access_config" {
-      for_each = try(var.external_interface.public_ip, false) ? ["1"] : []
-      content {}
-    }
-  }
-  # Management interface is on nic1
-  network_interface {
-    subnetwork = data.google_compute_subnetwork.mgmt.self_link
-    dynamic "access_config" {
-      for_each = try(var.mgmt_interface.public_ip, false) ? ["1"] : []
-      content {}
-    }
-  }
-  # If there are internal interfaces, assign to nic2+
   dynamic "network_interface" {
-    for_each = { for i, v in var.internal_interfaces == null ? [] : var.internal_interfaces : "${i}" => try(v.public_ip, false) }
+    for_each = data.google_compute_subnetwork.subnets
     content {
-      subnetwork = data.google_compute_subnetwork.internal[network_interface.key].self_link
+      subnetwork = network_interface.value.self_link
+      nic_type   = coalesce(try(var.interfaces[network_interface.key].nic_type, null), "VIRTIO_NET")
       dynamic "access_config" {
-        for_each = network_interface.value ? ["1"] : []
+        for_each = tobool(coalesce(try(var.interfaces[network_interface.key].public_ip, null), "false")) ? { public = true } : {}
         content {}
       }
     }
-  }
-
-  machine_type     = var.machine_type
-  min_cpu_platform = var.min_cpu_platform
-  scheduling {
-    automatic_restart   = var.automatic_restart
-    on_host_maintenance = ""
-    preemptible         = var.preemptible
-  }
-
-  service_account {
-    email = var.service_account
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
   }
 
   lifecycle {

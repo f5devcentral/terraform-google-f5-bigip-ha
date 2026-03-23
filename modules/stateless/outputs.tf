@@ -11,10 +11,3 @@ output "instance_group" {
   The Compute Engine instance group self-link of the stateless BIG-IP VMs.
   EOD
 }
-
-output "cluster_tag" {
-  value       = random_id.cluster_tag.hex
-  description = <<-EOD
-  The pseudo-random network tag generated to uniquely identify the instances in this stateless cluster.
-  EOD
-}
