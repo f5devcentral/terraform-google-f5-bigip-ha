@@ -10,3 +10,4 @@ rules:
       - tests/stateless/files/runtime-init-conf-1nic.yaml
       - tests/stateless/files/runtime-init-conf.yaml
       - tests/files/runtime-init-conf.yaml
+      - examples/stateless-nlb/templates/runtime-init-conf.yaml

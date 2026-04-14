@@ -102,3 +102,13 @@ fileignoreconfig:
   checksum: 04d59f80f1940b02be011ed7f21aa8c5f22cbc3ff8a27e74433831b813ff2b08
 - filename: tests/stateless/test_combos.py
   checksum: 998f1b5a997734c951e2a8e7f6eea725b99e81cddcb248aa8028dcdb1207ddf6
+- filename: examples/stateless-nlb/templates/runtime-init-conf.yaml
+  checksum: fe83aecee008846600153147a7b090e12942a36b300bfe5a1feed36202ebb852
+- filename: examples/stateless-nlb/variables.tf
+  checksum: 3c0c5a2fc73b62bfb7388da7f077f81bec77c6f4c13765d5fa0ded68e2dfd6e4
+- filename: examples/stateless-nlb/README.md
+  checksum: 4e80bd3045f4aaf176bde97596ee637d5539eeabb70e47fc4a2caaa7431a0d40
+  ignore_detectors:
+    - filecontent
+- filename: examples/stateless-nlb/main.tf
+  checksum: 4ddcfec2f135f9f86668c0b11678e33ec0a057017227594b7d762ec94e4af699
