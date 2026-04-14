@@ -1,0 +1,355 @@
+# Dual data-plane NIC runtime-init configuration file for stateful active-standby deployment scenarios.
+#
+# Actions:
+# 1. DO: Configure base VE properties, and eth0 and eth2 with self-ip, routing and MTU from metadata server, admin
+#        password from Google Secret Manager; join instances into device-, trust- and config-sync groups with failover.
+# 2. AS3
+#    a. /Common: Configure shared resources.
+#    b. /Applications: Configure VIP for backend service, start a health check responder on VIP for NLB health checks,
+#       and simulate an origin.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/F5Networks/f5-bigip-runtime-init/refs/heads/main/src/schema/base_schema.json
+---
+controls:
+  logLevel: info
+runtime_parameters:
+  - name: ADMIN_PASSWORD
+    type: secret
+    secretProvider:
+      environment: gcp
+      type: SecretsManager
+      version: latest
+      secretId: '${admin_pass_secret}'
+  - name: SELF_IP_PRIMARY_ADDRESS
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: address
+  - name: SELF_IP_PRIMARY_GATEWAY
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/gateway
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_PRIMARY_MTU
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/mtu
+    returnType: number
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_PRIMARY_NETWORK
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: base
+  - name: SELF_IP_PRIMARY_SIZE
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: bitmask
+  - name: SELF_IP_SECONDARY_ADDRESS
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 2
+      field: ip
+      ipcalc: address
+  - name: SELF_IP_SECONDARY_GATEWAY
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/2/gateway
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_SECONDARY_MTU
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/2/mtu
+    returnType: number
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_SECONDARY_NETWORK
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 2
+      field: ip
+      ipcalc: base
+  - name: SELF_IP_SECONDARY_SIZE
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 2
+      field: ip
+      ipcalc: bitmask
+  - name: HOSTNAME
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/hostname
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_NAME
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_name
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_ADDRESS
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_address
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_OWNER_INDEX
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_owner_index
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+pre_onboard_enabled:
+  - name: provision_rest
+    type: inline
+    commands:
+      - /usr/bin/setdb provision.extramb 1000 || true
+      - /usr/bin/setdb provision.restjavad.extramb 1384 || /usr/bin/setdb restjavad.useextramb true || true
+extension_packages:
+  install_operations:
+    - extensionType: do
+      extensionHash: 2338ce270d5ee12405e59d4f712b09cd111b24b5f78aee41e90f8e61ee2a36e2
+      extensionVersion: 1.47.0
+      extensionUrl: https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.47.0/f5-declarative-onboarding-1.47.0-14.noarch.rpm  # yamllint disable-line rule:line-length
+    - extensionType: as3
+      extensionHash: 69a9779a724edb9705ec22eb466f39a34d8facbc2f92336ce4ec088296d3530d
+      extensionVersion: 3.56.0
+      extensionUrl: https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v3.56.0/f5-appsvcs-3.56.0-10.noarch.rpm  # yamllint disable-line rule:line-length
+extension_services:
+  service_operations:
+    - extensionType: do
+      type: inline
+      value:
+        $schema: https://raw.githubusercontent.com/F5Networks/f5-declarative-onboarding/v1.47.0/src/schema/1.47.0/base.schema.json  # yamllint disable-line rule:line-length
+        schemaVersion: 1.47.0
+        class: Device
+        async: true
+        label: terraform-google-f5-bigip-ha-nlb-stateful
+        Common:
+          class: Tenant
+          system:
+            class: System
+            autoPhonehome: false
+            hostname: '{{{ HOSTNAME }}}'
+          dns:
+            class: DNS
+            nameServers:
+              - 169.254.169.254
+          ntp:
+            class: NTP
+            timezone: UTC
+            servers:
+              - 169.254.169.254
+          admin:
+            class: User
+            userType: regular
+            password: '{{{ ADMIN_PASSWORD }}}'
+            shell: bash
+            partitionAccess:
+              all-partitions:
+                role: admin
+          provision:
+            class: Provision
+            ltm: nominal
+          primary:
+            class: VLAN
+            tag: 4094
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+            interfaces:
+              - name: '1.0'
+                tagged: false
+          primary-self:
+            class: SelfIp
+            address: '{{{ SELF_IP_PRIMARY_ADDRESS }}}/32'
+            vlan: primary
+            allowService:
+              - 'tcp:80'
+              - 'tcp:443'
+              - 'tcp:4353'
+              - 'udp:1026'
+            trafficGroup: traffic-group-local-only
+          primary-rt-gw:
+            class: Route
+            target: primary
+            network: '{{{ SELF_IP_PRIMARY_GATEWAY }}}/32'
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+          default-rt:
+            class: Route
+            gw: '{{{ SELF_IP_PRIMARY_GATEWAY }}}'
+            network: default
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+          secondary:
+            class: VLAN
+            tag: 4092
+            mtu: '{{{ SELF_IP_SECONDARY_MTU }}}'
+            interfaces:
+              - name: '1.2'
+                tagged: false
+          secondary-self:
+            class: SelfIp
+            address: '{{{ SELF_IP_SECONDARY_ADDRESS }}}/32'
+            vlan: secondary
+            allowService: none
+            trafficGroup: traffic-group-local-only
+          secondary-rt-gw:
+            class: Route
+            target: secondary
+            network: '{{{ SELF_IP_SECONDARY_GATEWAY }}}/32'
+            mtu: '{{{ SELF_IP_SECONDARY_MTU }}}'
+          secondary-rt-net:
+            class: Route
+            gw: '{{{ SELF_IP_SECONDARY_GATEWAY }}}'
+            network: '{{{ SELF_IP_SECONDARY_NETWORK }}}/{{{ SELF_IP_SECONDARY_SIZE }}}'
+            mtu: '{{{ SELF_IP_SECONDARY_MTU }}}'
+          configSync:
+            class: ConfigSync
+            configsyncIp: '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
+          failoverAddress:
+            class: FailoverUnicast
+            address: '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
+          failoverGroup:
+            class: DeviceGroup
+            type: sync-failover
+            members:
+              - '{{{ HOSTNAME }}}'
+              - '{{{ PEER_NAME }}}'
+            owner: '/Common/failoverGroup/members/{{{ PEER_OWNER_INDEX }}}'
+            autoSync: true
+            saveOnAutoSync: false
+            networkFailover: true
+            fullLoadOnSync: false
+            asmSync: false
+          trust:
+            class: DeviceTrust
+            localUsername: admin
+            localPassword: '{{{ ADMIN_PASSWORD }}}'
+            remoteHost: '{{{ PEER_ADDRESS }}}'
+            remoteUsername: admin
+            remotePassword: '{{{ ADMIN_PASSWORD }}}'
+    - extensionType: as3
+      type: inline
+      value:
+        class: AS3
+        action: deploy
+        declaration:
+          $schema: https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/v3.56.0/schema/3.56.0/as3-schema.json
+          class: ADC
+          schemaVersion: 3.56.0
+          id: terraform-google-f5-bigip-ha-nlb-stateful
+          label: terraform-google-f5-bigip-nlb-ha-stateful
+          remark: Add /Common shared objects and /Applications tenant
+          Common:
+            class: Tenant
+            Shared:
+              class: Application
+              template: shared
+              hc_source_cidrs:
+                class: Net_Address_List
+                remark: Source addresses for GCP health probes
+                # This is the set of health check sources for NLB probes; note that probes *may* come from metadata
+                # server when target pool is used, as in this example.
+                addresses:
+                  - 35.191.0.0/16
+                  - 209.85.152.0/22
+                  - 209.85.204.0/22
+                  - 169.254.169.254/32
+              hc_respond_200:
+                class: iRule
+                label: health-check-responder
+                remark: Simple HTTP responder to confirm all is well
+                iRule: |
+                  when HTTP_REQUEST {
+                      HTTP::respond 200 content OK "Content-Type" "text/plain"
+                  }
+              echo:
+                class: iRule
+                label: echo-responder
+                remark: Simple HTTP responder to echo request host
+                iRule: |
+                  when HTTP_REQUEST {
+                      set resp "{\"host\":\"[HTTP::host]\",\"local_addr\":\"[IP::local_addr]\"}"
+                      HTTP::respond 200 content $resp "Content-Type" "application/json"
+                  }
+          Applications:
+            class: Tenant
+            app:
+              class: Application
+              template: generic
+              https:
+                class: Service_HTTPS
+                remark: Expose an HTTPS endpoint for example application
+                iRules:
+                  - use: /Common/Shared/echo
+                persistenceMethods: []
+                virtualAddresses:
+                  - '${vip}'
+                virtualPort: 443
+                redirect80: true
+                snat: auto
+                profileHTTP: basic
+                serverTLS: tls
+              tls_default_cert:
+                class: Certificate
+                certificate:
+                  bigip: /Common/default.crt
+                privateKey:
+                  bigip: /Common/default.key
+              tls_cipher_group:
+                class: Cipher_Group
+                allowCipherRules:
+                  - bigip: /Common/f5-secure
+              tls:
+                class: TLS_Server
+                certificates:
+                  - certificate: tls_default_cert
+                    sniDefault: true
+                cipherGroup:
+                  use: tls_cipher_group
+                sslEnabled: false
+                ssl3Enabled: false
+                tls1_0Enabled: false
+                tls1_1Enabled: false
+                tls1_2Enabled: true
+                tls1_3Enabled: true
+            readyz:
+              class: Application
+              template: generic
+              responder:
+                class: Service_HTTP
+                remark: Return a 200 status code when ready to accept traffic
+                iRules:
+                  - use: /Common/Shared/hc_respond_200
+                sourceAddress:
+                  use: /Common/Shared/hc_source_cidrs
+                virtualAddresses:
+                  - '${vip}'
+                virtualPort: 26000
+post_onboard_enabled:
+  - name: save_config
+    type: inline
+    commands:
+      - tmsh save sys config

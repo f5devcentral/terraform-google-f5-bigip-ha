@@ -14,7 +14,7 @@ from google.api_core import exceptions
 from google.cloud import compute_v1
 
 from tests import DEFAULT_WAIT_FOR_TIMEOUT
-from tests.examples import DEFAULT_BACKEND_SERVICE_SELF_LINK_PATTERN
+from tests.examples import DEFAULT_BACKEND_SERVICE_SELF_LINK_PATTERN, DEFAULT_TARGET_POOL_SELF_LINK_PATTERN
 
 
 @pytest.fixture(scope="session")
@@ -137,7 +137,65 @@ def wait_for_backend_service_healthy(
                         region=region,
                         backend_service=name,
                         resource_group_reference_resource=compute_v1.ResourceGroupReference(
-                            group=backend.group,  # f"projects/{project}/regions/{region}/instanceGroups/{name}",
+                            group=backend.group,
+                        ),
+                    ),
+                )
+                results.extend([status.health_state for status in result.health_status])
+        except exceptions.NotFound:
+            return False
+        return Counter(results)["HEALTHY"] >= minimum_healthy_count
+
+    def _wait(
+        self_link: str,
+        minimum_healthy_count: int | None = None,
+        timeout: timedelta | None = None,
+    ) -> None:
+        if minimum_healthy_count is None:
+            minimum_healthy_count = 1
+        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
+        while not _ready(self_link=self_link, minimum_healthy_count=minimum_healthy_count):
+            if datetime.now(UTC) > timeout_ts:
+                raise TimeoutError
+            time.sleep(10)
+
+    return _wait
+
+
+@pytest.fixture(scope="session")
+def target_pools_client() -> compute_v1.TargetPoolsClient:
+    """Return a reusable Compute Engine v1 Target Pools API client."""
+    return compute_v1.TargetPoolsClient()
+
+
+@pytest.fixture(scope="session")
+def wait_for_target_pool_healthy(
+    target_pools_client: compute_v1.TargetPoolsClient,
+) -> Callable[[str, int | None, timedelta | None], None]:
+    """Return a function that will wait until at least one instance in the target pool is healthy."""
+
+    def _ready(self_link: str, minimum_healthy_count: int) -> bool:
+        assert self_link
+        match = re.search(DEFAULT_TARGET_POOL_SELF_LINK_PATTERN, self_link)
+        assert match
+        project, region, name = match.groups()
+        results: list[str] = []
+        try:
+            target_pool = target_pools_client.get(
+                request=compute_v1.GetTargetPoolRequest(
+                    project=project,
+                    region=region,
+                    target_pool=name,
+                ),
+            )
+            for instance in target_pool.instances:
+                result = target_pools_client.get_health(
+                    request=compute_v1.GetHealthTargetPoolRequest(
+                        project=project,
+                        region=region,
+                        target_pool=name,
+                        instance_reference_resource=compute_v1.InstanceReference(
+                            instance=instance,
                         ),
                     ),
                 )
