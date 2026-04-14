@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.2.0...v0.2.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* Reference tag v0.2.1 in stateless-nlb/main.tf ([871b649](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/871b64949c9579e4f9dc1aa51e82200b9bd4462d))
+* Use v0.2.0 in stateless-nlb/main.tf ([3a2fc4d](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/3a2fc4d58cd072030a68db3cd15faa03dd585c6c))
+
 ## [0.2.0](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.1.0...v0.2.0) (2026-04-14)
 
 
