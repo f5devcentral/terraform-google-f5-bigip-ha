@@ -18,7 +18,14 @@ import requests.auth
 from google.api_core import exceptions, extended_operation
 from google.cloud import compute_v1, iam_admin_v1, storage
 
-from tests import ADMIN_USER_PASSWORD, DEFAULT_INSTANCE_SELF_LINK_PATTERN, MAX_NIC_COUNT, skip_destroy_phase
+from tests import (
+    ADMIN_USER_PASSWORD,
+    DEFAULT_INSTANCE_SELF_LINK_PATTERN,
+    DEFAULT_WAIT_FOR_TIMEOUT,
+    MAX_NIC_COUNT,
+    skip_destroy_phase,
+)
+from tests.stateless import DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN
 
 DEFAULT_PREFIX = "bigip-ha"
 DEFAULT_LABELS = {
@@ -29,7 +36,6 @@ DEFAULT_LABELS = {
 DEFAULT_REGION = "us-central1"
 DEFAULT_TF_STATE_PREFIX = "tests/terraform-google-f5-bigip-ha"
 DEFAULT_ADMIN_USER = "admin"
-DEFAULT_WAIT_FOR_TIMEOUT = timedelta(seconds=1200)
 
 
 @pytest.fixture(scope="session")
@@ -159,7 +165,7 @@ def backend_tf_builder(tf_state_bucket: str, tf_state_prefix: str) -> Callable[[
 @pytest.fixture(scope="session")
 def common_fixture_dir_ignores() -> Callable[[Any, list[str]], set[str]]:
     """Return a set of ignore patterns that are unrelated to module sources or supporting files."""
-    return shutil.ignore_patterns(".*", "*.md", "*.toml", "uv.lock", "tests")
+    return shutil.ignore_patterns(".*", "*.md", "*.tfstate*", "*.toml", "uv.lock", "tests")
 
 
 @pytest.fixture(scope="session")
@@ -288,21 +294,15 @@ def management_url(instance: compute_v1.Instance) -> str:
 
 
 @pytest.fixture(scope="session")
-def admin_basic_auth() -> requests.auth.HTTPBasicAuth:
-    """Return a reusable HTTPBasicAuth object for management interface authentication."""
-    return requests.auth.HTTPBasicAuth(username="admin", password=ADMIN_USER_PASSWORD)
-
-
-@pytest.fixture(scope="session")
-def sys_ready_retriever(
-    admin_basic_auth: requests.auth.HTTPBasicAuth,
-) -> Callable[[compute_v1.Instance], dict[str, Any]]:
+def sys_ready_retriever() -> Callable[[compute_v1.Instance, str | None], dict[str, Any]]:
     """Return a retriever and parser for iControlRest /mgmt/tm/sys/ready endpoint."""
 
-    def _retriever(instance: compute_v1.Instance) -> dict[str, Any]:
+    def _retriever(instance: compute_v1.Instance, password: str | None = None) -> dict[str, Any]:
+        if not password:
+            password = ADMIN_USER_PASSWORD
         return requests.get(
             url=f"{management_url(instance)}/mgmt/tm/sys/ready",
-            auth=admin_basic_auth,
+            auth=requests.auth.HTTPBasicAuth(username="admin", password=password),
             verify=False,
         ).json()
 
@@ -310,15 +310,15 @@ def sys_ready_retriever(
 
 
 @pytest.fixture(scope="session")
-def cm_device_retriever(
-    admin_basic_auth: requests.auth.HTTPBasicAuth,
-) -> Callable[[compute_v1.Instance], dict[str, Any]]:
+def cm_device_retriever() -> Callable[[compute_v1.Instance, str | None], dict[str, Any]]:
     """Return a retriever and parser for iControlRest /mgmt/tm/cm/device endpoints."""
 
-    def _retriever(instance: compute_v1.Instance) -> dict[str, Any]:
+    def _retriever(instance: compute_v1.Instance, password: str | None = None) -> dict[str, Any]:
+        if not password:
+            password = ADMIN_USER_PASSWORD
         return requests.get(
             url=f"{management_url(instance)}/mgmt/tm/cm/device/{instance.hostname}",
-            auth=admin_basic_auth,
+            auth=requests.auth.HTTPBasicAuth(username="admin", password=password),
             verify=False,
         ).json()
 
@@ -327,12 +327,14 @@ def cm_device_retriever(
 
 @pytest.fixture(scope="session")
 def active_standby_asserter(
-    cm_device_retriever: Callable[[compute_v1.Instance], dict[str, Any]],
+    cm_device_retriever: Callable[[compute_v1.Instance, str | None], dict[str, Any]],
 ) -> Callable[[list[compute_v1.Instance]], None]:
     """Return an asserter function that verifies one instance is 'active', and all others are 'standby'."""
 
-    def _asserter(instances: list[compute_v1.Instance]) -> None:
-        states = Counter([cm_device_retriever(instance).get("failoverState", "unknown") for instance in instances])
+    def _asserter(instances: list[compute_v1.Instance], password: str | None = None) -> None:
+        states = Counter(
+            [cm_device_retriever(instance, password).get("failoverState", "unknown") for instance in instances],
+        )
         assert states["active"] == 1
         assert states["standby"] == len(instances) - 1
         assert not states["unknown"]
@@ -342,12 +344,12 @@ def active_standby_asserter(
 
 @pytest.fixture(scope="session")
 def bigip_is_ready_asserter(
-    sys_ready_retriever: Callable[[compute_v1.Instance], dict[str, Any]],
+    sys_ready_retriever: Callable[[compute_v1.Instance, str | None], dict[str, Any]],
 ) -> Callable[[compute_v1.Instance], None]:
     """Return an asserter function that verifies a BIG-IP instance is ready for use."""
 
-    def _asserter(instance: compute_v1.Instance) -> None:
-        result = sys_ready_retriever(instance)
+    def _asserter(instance: compute_v1.Instance, password: str | None = None) -> None:
+        result = sys_ready_retriever(instance, password)
         assert result
         entries = (
             result.get("entries", {})
@@ -796,3 +798,42 @@ def bucket_builder(
         return bucket.name
 
     return _builder
+
+
+@pytest.fixture(scope="session")
+def wait_for_instance_group_manager_deleted(
+    region_instance_group_managers_client: compute_v1.RegionInstanceGroupManagersClient,
+) -> Callable[[str, timedelta | None], None]:
+    """Return a function that will wait until the instance group manager no longer exists."""
+
+    def _exists(self_link: str) -> bool:
+        assert self_link
+        match = re.search(DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN, self_link)
+        assert match
+        project, region, name = match.groups()
+        try:
+            _ = region_instance_group_managers_client.get(
+                request=compute_v1.GetRegionInstanceGroupManagerRequest(
+                    project=project,
+                    region=region,
+                    instance_group_manager=name,
+                ),
+            )
+        except exceptions.NotFound:
+            return False
+        return True
+
+    def _wait(
+        self_link: str,
+        timeout: timedelta | None = None,
+    ) -> None:
+        # Don't wait for destruction if it isn't going to happen
+        if skip_destroy_phase():
+            return
+        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
+        while _exists(self_link):
+            if datetime.now(UTC) > timeout_ts:
+                raise TimeoutError
+            time.sleep(60)
+
+    return _wait

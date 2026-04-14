@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 from collections.abc import Callable, Generator, MutableMapping, MutableSequence
 from contextlib import contextmanager
+from datetime import timedelta
 from operator import itemgetter
 from typing import Any
 
@@ -56,6 +57,8 @@ DEFAULT_INSTANCE_NIC_TYPE = "VIRTIO_NET"
 DEFAULT_INSTANCE_SERVICE_ACCOUNT_EMAIL_PATTERN = re.compile(
     r"(?:[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam|[0-9]+-compute@developer)\.gserviceaccount\.com$",
 )
+
+DEFAULT_WAIT_FOR_TIMEOUT = timedelta(seconds=1200)
 
 
 def _schema_fetcher(uri: str) -> referencing.Resource:
@@ -223,7 +226,7 @@ def run_tf_in_workspace(
                 capture_output=True,
             )
             subprocess.run(
-                [
+                args=[
                     tf_command,
                     f"-chdir={fixture!s}",
                     "apply",

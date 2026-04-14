@@ -9,8 +9,6 @@
 ---
 controls:
   logLevel: info
-  # This is aggressive to speed up testing
-  extensionInstallDelayInMs: 10000
 runtime_parameters:
   - name: ADMIN_PASSWORD
     type: static
@@ -86,7 +84,7 @@ extension_services:
           schemaVersion: 3.56.0
           id: terraform-google-f5-bigip-ha-stateless-common
           label: terraform-google-f5-bigip-ha-stateless-common
-          remark: Add /Common shared objects and an livez HTTP service
+          remark: Add /Common shared objects and a livez HTTP service
           Common:
             class: Tenant
             Shared:
@@ -95,6 +93,7 @@ extension_services:
               hc_source_cidrs:
                 class: Net_Address_List
                 remark: Source addresses for GCP health probes
+                # This is the set of health check sources for MIG probes
                 addresses:
                   - 35.191.0.0/16
                   - 130.211.0.0/22

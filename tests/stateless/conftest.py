@@ -1,19 +1,12 @@
 """Fixtures for stateless module test cases."""
 
 import pathlib
-import re
 import shutil
-import time
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 import pytest
-from google.api_core import exceptions
-from google.cloud import compute_v1
-
-from tests import skip_destroy_phase
-from tests.stateless import DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN
 
 DEFAULT_WAIT_FOR_TIMEOUT = timedelta(seconds=900)
 
@@ -72,42 +65,3 @@ def runtime_init_conf_1nic() -> str:
     assert runtime_init_conf.exists()
     assert runtime_init_conf.is_file()
     return runtime_init_conf.read_text()
-
-
-@pytest.fixture(scope="session")
-def wait_for_instance_group_manager_deleted(
-    region_instance_group_managers_client: compute_v1.RegionInstanceGroupManagersClient,
-) -> Callable[[str, timedelta | None], None]:
-    """Return a function that will wait until the instance group manager no longer exists."""
-
-    def _exists(self_link: str) -> bool:
-        assert self_link
-        match = re.search(DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN, self_link)
-        assert match
-        project, region, name = match.groups()
-        try:
-            _ = region_instance_group_managers_client.get(
-                request=compute_v1.GetRegionInstanceGroupManagerRequest(
-                    project=project,
-                    region=region,
-                    instance_group_manager=name,
-                ),
-            )
-        except exceptions.NotFound:
-            return False
-        return True
-
-    def _wait(
-        self_link: str,
-        timeout: timedelta | None = None,
-    ) -> None:
-        # Don't wait for destruction if it isn't going to happen
-        if skip_destroy_phase():
-            return
-        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
-        while _exists(self_link):
-            if datetime.now(UTC) > timeout_ts:
-                raise TimeoutError
-            time.sleep(60)
-
-    return _wait

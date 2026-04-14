@@ -9,8 +9,6 @@
 ---
 controls:
   logLevel: info
-  # This is aggressive to speed up testing
-  extensionInstallDelayInMs: 10000
 runtime_parameters:
   - name: ADMIN_PASSWORD
     type: static
@@ -153,10 +151,10 @@ extension_services:
             target: primary
             network: '{{{ SELF_IP_PRIMARY_GATEWAY }}}/32'
             mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
-          primary-rt-net:
+          default-rt:
             class: Route
             gw: '{{{ SELF_IP_PRIMARY_GATEWAY }}}'
-            network: '{{{ SELF_IP_PRIMARY_NETWORK }}}/{{{ SELF_IP_PRIMARY_SIZE }}}'
+            network: default
             mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
           configSync:
             class: ConfigSync

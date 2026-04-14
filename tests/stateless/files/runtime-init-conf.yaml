@@ -9,8 +9,6 @@
 ---
 controls:
   logLevel: info
-  # This is aggressive to speed up testing
-  extensionInstallDelayInMs: 10000
 runtime_parameters:
   - name: ADMIN_PASSWORD
     type: static
@@ -123,10 +121,10 @@ extension_services:
             target: primary
             network: '{{{ SELF_IP_PRIMARY_GATEWAY }}}/32'
             mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
-          primary-rt-net:
+          default-rt:
             class: Route
             gw: '{{{ SELF_IP_PRIMARY_GATEWAY }}}'
-            network: '{{{ SELF_IP_PRIMARY_NETWORK }}}/{{{ SELF_IP_PRIMARY_SIZE }}}'
+            network: default
             mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
     - extensionType: as3
       type: inline
@@ -139,7 +137,7 @@ extension_services:
           schemaVersion: 3.56.0
           id: terraform-google-f5-bigip-ha-stateless-common
           label: terraform-google-f5-bigip-ha-stateless-common
-          remark: Add /Common shared objects and an livez HTTP service
+          remark: Add /Common shared objects and a livez HTTP service
           Common:
             class: Tenant
             Shared:
@@ -148,6 +146,7 @@ extension_services:
               hc_source_cidrs:
                 class: Net_Address_List
                 remark: Source addresses for GCP health probes
+                # This is the set of health check sources for MIG
                 addresses:
                   - 35.191.0.0/16
                   - 130.211.0.0/22
@@ -166,11 +165,11 @@ extension_services:
                   - use: hc_respond_200
                 sourceAddress:
                   use: hc_source_cidrs
-                virtualPort: 26000
                 shareAddresses: true
                 # MIG health checks target self-ip of eth0, can't use wildcard with 2+ NICs
                 virtualAddresses:
                   - '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
+                virtualPort: 26000
 post_onboard_enabled:
   - name: save_config
     type: inline

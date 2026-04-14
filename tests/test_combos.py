@@ -232,8 +232,8 @@ def test_output_values(
 
 def test_instances(
     guest_attributes_asserter: Callable[..., None],
-    bigip_is_ready_asserter: Callable[[compute_v1.Instance], None],
-    active_standby_asserter: Callable[[list[compute_v1.Instance]], None],
+    bigip_is_ready_asserter: Callable[..., None],
+    active_standby_asserter: Callable[..., None],
     instances: list[compute_v1.Instance],
     sa_email: str,
     fixture_labels: dict[str, str],
@@ -278,5 +278,5 @@ def test_instances(
         default_assert_shielded_instance_integrity_policy(instance.shielded_instance_integrity_policy)
         default_assert_customer_encryption_key(instance.source_machine_image_encryption_key)
         default_assert_tags(instance.tags, expected_tags=[cluster_tag])
-        bigip_is_ready_asserter(instance)
-    active_standby_asserter(instances)
+        bigip_is_ready_asserter(instance=instance)
+    active_standby_asserter(instances=instances)

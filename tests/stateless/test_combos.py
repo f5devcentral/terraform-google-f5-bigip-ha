@@ -120,7 +120,7 @@ def subnet_self_links(
     for i, cidr in enumerate(subnet_ranges):
         vpc_name = f"{fixture_name}-{i}"
         network_self_link = network_builder(name=vpc_name)
-        if i <= 1:
+        if min(len(subnet_ranges) - 1, 1):
             allow_ingress_firewall_builder(network=network_self_link, name=vpc_name)
         subnets.append(subnet_builder(name=vpc_name, cidr=str(cidr), network_self_link=network_self_link))
     return subnets
@@ -406,7 +406,7 @@ def test_managed_instances(
 
 def test_instances(
     guest_attributes_asserter: Callable[..., None],
-    bigip_is_ready_asserter: Callable[[compute_v1.Instance], None],
+    bigip_is_ready_asserter: Callable[..., None],
     instances_for_scenario: tuple[StatelessScenario, list[compute_v1.Instance]],
     sa_email: str,
     fixture_labels: dict[str, str],
@@ -444,4 +444,4 @@ def test_instances(
         default_assert_shielded_instance_integrity_policy(instance.shielded_instance_integrity_policy)
         default_assert_customer_encryption_key(instance.source_machine_image_encryption_key)
         default_assert_tags(instance.tags)
-        bigip_is_ready_asserter(instance)
+        bigip_is_ready_asserter(instance=instance)

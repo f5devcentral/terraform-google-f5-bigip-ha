@@ -99,7 +99,7 @@ fileignoreconfig:
 - filename: tests/__init__.py
   checksum: 1d6f42b6c869ee9ba0be7e74e7498d9c9f17f92ebcf942cbaf1c5cbb8bb2bb65
 - filename: tests/conftest.py
-  checksum: 04d59f80f1940b02be011ed7f21aa8c5f22cbc3ff8a27e74433831b813ff2b08
+  checksum: c2b1f5fa6c5a9afc86f8bd6c4e12db84f4c6a1b9dd1697077e44ee7882e93098
 - filename: tests/stateless/test_combos.py
   checksum: 998f1b5a997734c951e2a8e7f6eea725b99e81cddcb248aa8028dcdb1207ddf6
 - filename: examples/stateless-nlb/templates/runtime-init-conf.yaml
