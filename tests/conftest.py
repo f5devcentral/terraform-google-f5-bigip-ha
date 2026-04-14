@@ -16,7 +16,7 @@ import pytest
 import requests
 import requests.auth
 from google.api_core import exceptions, extended_operation
-from google.cloud import compute_v1, iam_admin_v1, storage
+from google.cloud import compute_v1, iam_admin_v1, secretmanager_v1, storage
 
 from tests import (
     ADMIN_USER_PASSWORD,
@@ -137,6 +137,18 @@ def tf_state_prefix() -> str:
         prefix = DEFAULT_TF_STATE_PREFIX
     assert prefix
     return prefix
+
+
+@pytest.fixture(scope="session")
+def license_keys_retriever() -> Callable[[str], list[str]]:
+    """Return a function that can retrieve license keys for a fixture from environment variable."""
+
+    def _retriever(fixture_name: str) -> list[str]:
+        keys = os.getenv(f"TEST_{fixture_name.upper().replace('-', '_')}_LICENSE_KEYS")
+        assert keys
+        return keys.split(",")
+
+    return _retriever
 
 
 @pytest.fixture(scope="session")
@@ -338,6 +350,23 @@ def active_standby_asserter(
         assert states["active"] == 1
         assert states["standby"] == len(instances) - 1
         assert not states["unknown"]
+
+    return _asserter
+
+
+@pytest.fixture(scope="session")
+def all_standalone_asserter(
+    cm_device_retriever: Callable[[compute_v1.Instance, str | None], dict[str, Any]],
+) -> Callable[[list[compute_v1.Instance]], None]:
+    """Return an asserter function that verifies all instances are not in a failover group."""
+
+    def _asserter(instances: list[compute_v1.Instance], password: str | None = None) -> None:
+        states = Counter(
+            [cm_device_retriever(instance, password).get("failoverState", "unknown") for instance in instances],
+        )
+        assert not states["active"]
+        assert not states["standby"]
+        assert states["unknown"] == len(instances)
 
     return _asserter
 
@@ -837,3 +866,32 @@ def wait_for_instance_group_manager_deleted(
             time.sleep(60)
 
     return _wait
+
+
+@pytest.fixture(scope="session")
+def secret_manager_client() -> secretmanager_v1.SecretManagerServiceClient:
+    """Return a reusable Secret Manager v1 Target Pools API client."""
+    return secretmanager_v1.SecretManagerServiceClient()
+
+
+@pytest.fixture(scope="session")
+def secret_retriever(
+    secret_manager_client: secretmanager_v1.SecretManagerServiceClient,
+    project_id: str,
+) -> Callable[[str, str | None], bytes]:
+    """Return a function that can retrieve the raw data from a named Secret Manager secret."""
+
+    def _retriever(name: str, version: str | None = None) -> bytes:
+        assert name
+        if not version:
+            version = "latest"
+        value = secret_manager_client.access_secret_version(
+            request=secretmanager_v1.AccessSecretVersionRequest(
+                name=f"projects/{project_id}/secrets/{name}/versions/{version}",
+            ),
+        )
+        assert value
+        assert value.payload
+        return value.payload.data
+
+    return _retriever
