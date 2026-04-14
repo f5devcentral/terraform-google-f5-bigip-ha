@@ -1,34 +1,41 @@
 output "self_links" {
-  value       = { for k, v in module.instances : v.name => v.self_link }
+  value       = { for k, v in google_compute_instance.bigip : v.name => v.self_link }
   description = <<-EOD
 A map of BIG-IP instance name to fully-qualified self-links.
 EOD
 }
 
 output "names" {
-  value       = [for k, v in module.instances : v.name]
+  value       = [for k, v in google_compute_instance.bigip : v.name]
   description = <<-EOD
 The instance names of the BIG-IPs.
 EOD
 }
 
-output "mgmtPublicIPs" {
-  value       = { for k, v in module.instances : v.name => v.mgmtPublicIP }
+output "public_mgmt_ips" {
+  value       = { for k, v in google_compute_instance.bigip : v.name => try(v.network_interface[var.management_interface_index].access_config[0].nat_ip, "") }
   description = <<-EOD
 A map of BIG-IP instance name to public IP address, if any, on the management interface.
 EOD
 }
 
-output "target_groups" {
-  value       = [for k, v in google_compute_instance_group.group : v.self_link]
+output "private_mgmt_ips" {
+  value       = { for k, v in google_compute_instance.bigip : v.name => v.network_interface[var.management_interface_index].network_ip }
   description = <<-EOD
-A list of fully-qualified BIG-IP unmanaged instance group self-links.
+A map of BIG-IP instance name to private IP address on the management interface.
 EOD
 }
 
-output "target_instances" {
-  value       = [for k, v in google_compute_target_instance.target : v.self_link]
+output "instances_by_zone" {
+  value       = { for k, v in google_compute_instance.bigip : v.zone => v.self_link... }
   description = <<-EOD
-A list of fully-qualified target instance self-links for the BIG-IPs.
-EOD
+  A map of Compute Engine zones to a list of instance self-links.
+  EOD
+}
+
+output "cluster_tag" {
+  value       = local.cluster_tag
+  description = <<-EOD
+  The network tag generated to uniquely identify the instances in this HA cluster.
+  EOD
 }

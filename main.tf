@@ -1,120 +1,231 @@
 terraform {
-  required_version = ">= 0.14.5"
+  required_version = ">= 1.5"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 3.85.0"
+      version = ">= 7.1"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.8"
     }
   }
 }
 
+data "google_compute_subnetwork" "subnets" {
+  for_each  = var.interfaces == null ? {} : { for i, v in var.interfaces : tostring(i) => v.subnet_id }
+  self_link = each.value
+}
+
+data "google_compute_image" "bigip" {
+  project = try(regex("projects/([^/]+)/global/", var.image)[0], var.project_id)
+  family  = try(regex("family/([^/]+)$", var.image)[0], null)
+  name    = try(regex("images/([^/]+)$", var.image)[0], null)
+}
+
+data "google_compute_zones" "zones" {
+  project = var.project_id
+  region  = local.region
+}
+
+resource "random_shuffle" "zones" {
+  input = data.google_compute_zones.zones.names
+}
+
+# Generate a pseudo-random tag value that can be used in firewall rules that are unique to this cluster of BIG-IPs.
+resource "random_id" "cluster_tag" {
+  prefix      = format("%s-", var.prefix)
+  byte_length = 4
+}
+
 locals {
-  num_bigips       = 2
-  dsc_data_subnets = toset(coalescelist(compact([for outer in var.internal_subnet_ids : length(outer) > 0 ? outer[0].subnet_id : null]), compact([for outer in var.external_subnet_ids : length(outer) > 0 ? outer[0].subnet_id : null])))
-  /*
-  dsc_subnet = element(distinct(compact(concat([for subnet in var.internal_subnet_ids: subnet.subnet_id], [for subnet in var.external_subnet_ids: subnet.subnet_id]))), 0)
-  dsc_subnet_is_internal = element(distinct(compact(concat([for subnet in var.internal_subnet_ids: "internal" if coalesce(subnet.subnet_id, "unspecified") != "unspecified"], [for subnet in var.external_subnet_ids: "external" if coalesce(subnet.subnet_id, "unspecified") != "unspecified"]))), 0) == "internal"
-  external_subnet_ids = local.dsc_subnet_is_internal ? var.external_subnet_ids : [for i, v in var.external_subnet_ids: merge(v, {
-    private_ip_primary = google_compute_address.dsc[i].address
-  })]
-  internal_subnet_ids = local.dsc_subnet_is_internal ? [for i, v in var.internal_subnet_ids: merge(v, {
-    private_ip_primary = google_compute_address.dsc[i].address
-  })] : var.internal_subnet_ids
-  */
-}
-
-module "instances" {
-  for_each = { for i in range(0, local.num_bigips) : "${i}" => {
-    zone                = element(var.zones, i)
-    mgmt_subnet_ids     = element(var.mgmt_subnet_ids, i)
-    external_subnet_ids = element(var.external_subnet_ids, i)
-    internal_subnet_ids = element(var.internal_subnet_ids, i)
+  dsc_data_plane_index = var.management_interface_index == 0 ? 1 : 0
+  cluster_tag          = coalesce(var.cluster_network_tag, random_id.cluster_tag.hex)
+  region               = one(distinct([for subnet in data.google_compute_subnetwork.subnets : subnet.region]))
+  zones                = coalescelist(var.zones, random_shuffle.zones.result)
+  user_data = templatefile(format("%s/modules/template/templates/cloud-config.yaml", path.module), {
+    onboard_sh                = base64gzip(file(format("%s/modules/template/files/onboard.sh", path.module)))
+    reset_management_route_sh = base64gzip(file(format("%s/modules/template/files/reset_management_route.sh", path.module)))
+    onboard_env = {
+      MGMT_INTERFACE         = var.management_interface_index
+      RUNTIME_INIT_URL       = try(var.runtime_init_installer.url, "")
+      RUNTIME_INIT_SHA256SUM = try(var.runtime_init_installer.sha256sum, "")
+      RUNTIME_INIT_INSTALLER_EXTRA_ARGS = trimspace(join(" ", compact(concat([
+        try(var.runtime_init_installer.skip_toolchain_metadata_sync, false) ? "--skip-toolchain-metadata-sync" : "",
+        try(var.runtime_init_installer.skip_verify, false) ? "--skip-verify" : "",
+        coalesce(try(var.runtime_init_installer.verify_gpg_key_url, "unspecified"), "unspecified") != "unspecified" ? format("--key %s", var.runtime_init_installer.verify_gpg_key_url) : "",
+      ]))))
+      RUNTIME_INIT_EXTRA_ARGS = trimspace(join(" ", compact(concat([
+        try(var.runtime_init_installer.skip_telemetry, false) ? "--skip-telemetry" : "",
+      ]))))
+    }
+    reset_management_route_env = {
+      MGMT_INTERFACE = var.management_interface_index
+    }
+    runtime_init_configs = { for i, config in [var.runtime_init_config] : (format("/config/cloud/%02d_runtime-init-conf.%s", i, can(jsondecode(config)) ? "json" : "yaml")) => config }
+  })
+  metadata = var.metadata == null ? {
+    user-data = local.user_data
+    } : merge({
+      user-data = local.user_data
+  }, var.metadata)
+  # Official published images have a common naming convention that can be used to infer the release
+  inferred_version = can(regex("f5-bigip-([12][0-9])-([0-9]+)-([0-9]+)-", data.google_compute_image.bigip.name)) ? format("v%s", join(".", regex("f5-bigip-([12][0-9])-([0-9]+)-([0-9]+)-", data.google_compute_image.bigip.name))) : "unknown version"
+  vm_names         = try(length(var.instances), 0) > 0 ? keys(var.instances) : [for i in range(0, var.num_instances) : format("%s-%02d", var.prefix, i + 1)]
+  vms = { for i, name in local.vm_names : name => {
+    hostname = try(compact(concat(try([var.instances[name].hostname], []), coalesce(var.host_domain, "unspecified") == "unspecified" ? [] : [format("%s.%s", name, var.host_domain)]))[0], null)
+    zone     = element(local.zones, i)
+    metadata = merge(
+      {
+        bigip_ha_peer_name        = try(compact(concat(try([var.instances[local.vm_names[i == 0 ? 1 : 0]].hostname], []), coalesce(var.host_domain, "unspecified") == "unspecified" ? [local.vm_names[i == 0 ? 1 : 0]] : [format("%s.%s", local.vm_names[i == 0 ? 1 : 0], var.host_domain)]))[0])
+        bigip_ha_peer_address     = coalesce(try(var.instances[local.vm_names[i == 0 ? 1 : 0]].interfaces[local.dsc_data_plane_index].primary_ip, ""), try(google_compute_address.dsc_data_plane[local.vm_names[i == 0 ? 1 : 0]].address, ""))
+        bigip_ha_peer_owner_index = min(i, 1)
+      },
+      local.metadata,
+      try(var.instances[name].metadata, {}),
+    )
+    interfaces = [for i, v in var.interfaces : {
+      subnet_id = data.google_compute_subnetwork.subnets[tostring(i)].self_link
+      public_ip = tobool(coalesce(
+        try(v.public_ip, null),
+        "false",
+      ))
+      nic_type = coalesce(
+        try(v.nic_type, null),
+        "VIRTIO_NET",
+      )
+      private_ip_primary = coalesce(
+        try(var.instances[name].interfaces[i].primary_ip, null),
+        i == var.management_interface_index ? try(google_compute_address.dsc_control_plane[name].address, null) : null,
+        i == local.dsc_data_plane_index ? try(google_compute_address.dsc_data_plane[name].address, null) : null,
+        "unspecified",
+      )
+      private_ip_secondary = try(var.instances[name].interfaces[i], {})
+    }]
   } }
-  source                            = "F5Networks/bigip-module/gcp"
-  version                           = "1.1.0"
-  prefix                            = var.prefix
-  project_id                        = var.project_id
-  zone                              = each.value.zone
-  min_cpu_platform                  = var.min_cpu_platform
-  machine_type                      = var.machine_type
-  automatic_restart                 = var.automatic_restart
-  preemptible                       = var.preemptible
-  image                             = var.image
-  disk_type                         = var.disk_type
-  disk_size_gb                      = var.disk_size_gb
-  mgmt_subnet_ids                   = each.value.mgmt_subnet_ids
-  external_subnet_ids               = each.value.external_subnet_ids
-  internal_subnet_ids               = each.value.internal_subnet_ids
-  f5_username                       = var.f5_username
-  f5_password                       = var.f5_password
-  onboard_log                       = var.onboard_log
-  libs_dir                          = var.libs_dir
-  gcp_secret_manager_authentication = var.gcp_secret_manager_authentication
-  gcp_secret_name                   = var.gcp_secret_name
-  gcp_secret_version                = var.gcp_secret_version
-  DO_URL                            = var.DO_URL
-  AS3_URL                           = var.AS3_URL
-  TS_URL                            = var.TS_URL
-  CFE_URL                           = var.CFE_URL
-  FAST_URL                          = var.FAST_URL
-  INIT_URL                          = var.INIT_URL
-  labels                            = var.labels
-  service_account                   = var.service_account
-  f5_ssh_publickey                  = var.f5_ssh_publickey
-  custom_user_data                  = var.custom_user_data
-  metadata                          = var.metadata
-  sleep_time                        = var.sleep_time
 }
 
-
-resource "google_compute_instance_group" "group" {
-  for_each    = { for k, v in module.instances : v.zone => v.self_link... if var.targets.groups }
-  project     = var.project_id
-  name        = format("%s-%02d", var.prefix, index(var.zones, each.key))
-  description = format("BIG-IP instance group (%s %s)", var.prefix, each.key)
-  zone        = each.key
-  instances   = each.value
+resource "google_compute_address" "dsc_control_plane" {
+  for_each     = toset([for name in local.vm_names : name if coalesce(try(var.instances[name].interfaces[var.management_interface_index].primary_ip, null), "unspecified") == "unspecified"])
+  name         = format("%s-dsc-cp", each.key)
+  description  = format("Reserved control-plane address for BIG-IP instance %s", each.key)
+  address_type = "INTERNAL"
+  ip_version   = "IPV4"
+  purpose      = "GCE_ENDPOINT"
+  project      = var.project_id
+  subnetwork   = data.google_compute_subnetwork.subnets[tostring(var.management_interface_index)].id
+  region       = data.google_compute_subnetwork.subnets[tostring(var.management_interface_index)].region
+  labels       = var.labels
 }
 
-resource "google_compute_target_instance" "target" {
-  for_each = { for i in range(0, local.num_bigips) : "${i}" => {
-    name      = module.instances["${i}"].name
-    zone      = module.instances["${i}"].zone
-    self_link = module.instances["${i}"].self_link
-  } if var.targets.instances }
-  #for_each    = { for k, v in module.instances : v.name => { zone = v.zone, self_link = v.self_link } if var.targets.instances }
-  project     = var.project_id
-  name        = format("%s-tgt", each.value.name)
-  description = format("BIG-IP %s target instance", each.value.name)
-  zone        = each.value.zone
-  instance    = each.value.self_link
+resource "google_compute_address" "dsc_data_plane" {
+  for_each     = toset([for name in local.vm_names : name if try(var.instances[name].interfaces[local.dsc_data_plane_index].primary_ip, "") == ""])
+  name         = format("%s-dsc-dp", each.key)
+  description  = format("Reserved data-plane address for BIG-IP instance %s", each.key)
+  address_type = "INTERNAL"
+  ip_version   = "IPV4"
+  purpose      = "GCE_ENDPOINT"
+  project      = var.project_id
+  subnetwork   = data.google_compute_subnetwork.subnets[tostring(local.dsc_data_plane_index)].id
+  region       = data.google_compute_subnetwork.subnets[tostring(local.dsc_data_plane_index)].region
+  labels       = var.labels
 }
 
-data "google_compute_subnetwork" "dsc_mgmt" {
-  for_each  = toset([for subnet in flatten(var.mgmt_subnet_ids) : subnet.subnet_id])
-  self_link = each.value
-}
+resource "google_compute_instance" "bigip" {
+  for_each         = local.vms
+  project          = var.project_id
+  name             = each.key
+  description      = coalesce(var.description, format("%d-nic BIG-IP %s", length(data.google_compute_subnetwork.subnets), local.inferred_version))
+  zone             = each.value.zone
+  labels           = var.labels
+  hostname         = each.value.hostname
+  metadata         = each.value.metadata
+  machine_type     = var.machine_type
+  min_cpu_platform = var.min_cpu_platform
 
-data "google_compute_subnetwork" "dsc_data" {
-  for_each  = local.dsc_data_subnets
-  self_link = each.value
+  scheduling {
+    automatic_restart   = var.preemptible ? false : var.automatic_restart
+    on_host_maintenance = var.preemptible ? "TERMINATE" : "MIGRATE"
+    preemptible         = var.preemptible
+  }
+
+  service_account {
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
+  }
+
+  boot_disk {
+    device_name = "boot-disk"
+    auto_delete = true
+    initialize_params {
+      image  = data.google_compute_image.bigip.self_link
+      type   = var.disk_type
+      size   = var.disk_size_gb
+      labels = var.labels
+    }
+  }
+
+  can_ip_forward = true
+  tags = concat(
+    [
+      local.cluster_tag,
+    ],
+    try(length(var.network_tags), 0) != 0 ? var.network_tags : [],
+  )
+
+  dynamic "network_interface" {
+    for_each = each.value.interfaces
+    content {
+      subnetwork = network_interface.value.subnet_id
+      network_ip = network_interface.value.private_ip_primary != "unspecified" ? network_interface.value.private_ip_primary : null
+      nic_type   = network_interface.value.nic_type
+      dynamic "access_config" {
+        for_each = network_interface.value.public_ip ? { public = true } : {}
+        content {}
+      }
+      dynamic "alias_ip_range" {
+        for_each = network_interface.value.private_ip_secondary
+        content {
+          ip_cidr_range         = alias_ip_range.value.cidr
+          subnetwork_range_name = coalesce(alias_ip_range.value.range_name, "unspecified") != "unspecified" ? alias_ip_range.value.range_name : null
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    # When deploying with CFE, Alias IP may be moved between instances on failover; ignore these changes and rely on
+    # CFE doing the right thing. This will require a manual intervention if the Alias IPs are changed.
+    ignore_changes = [
+      network_interface[0].alias_ip_range,
+      network_interface[1].alias_ip_range,
+      network_interface[2].alias_ip_range,
+      network_interface[3].alias_ip_range,
+      network_interface[4].alias_ip_range,
+      network_interface[5].alias_ip_range,
+      network_interface[6].alias_ip_range,
+      network_interface[7].alias_ip_range,
+    ]
+  }
+
+  depends_on = [
+    google_compute_address.dsc_control_plane,
+    google_compute_address.dsc_data_plane,
+  ]
 }
 
 # DSC requires BIG-IP instances to communicate via HTTPS management port on
 # control-plane network.
 resource "google_compute_firewall" "mgt_sync" {
-  for_each    = toset([for subnet in data.google_compute_subnetwork.dsc_mgmt : subnet.network])
-  project     = var.project_id
+  project     = data.google_compute_subnetwork.subnets[tostring(var.management_interface_index)].project
   name        = format("%s-allow-dsc-mgmt", var.prefix)
-  network     = each.value
-  description = "BIG-IP ConfigSync for management network"
+  network     = data.google_compute_subnetwork.subnets[tostring(var.management_interface_index)].network
+  description = "BIG-IP ConfigSync support on management network"
   direction   = "INGRESS"
-  source_service_accounts = [
-    var.service_account,
-  ]
-  target_service_accounts = [
-    var.service_account,
-  ]
+  source_tags = [random_id.cluster_tag.hex]
+  target_tags = [random_id.cluster_tag.hex]
   allow {
     protocol = "tcp"
     ports = [
@@ -126,24 +237,18 @@ resource "google_compute_firewall" "mgt_sync" {
 # DSC requires BIG-IP instances to communicate via known ports on data-plane
 # network.
 resource "google_compute_firewall" "data_sync" {
-  for_each    = toset([for subnet in data.google_compute_subnetwork.dsc_data : subnet.network])
-  project     = var.project_id
+  project     = data.google_compute_subnetwork.subnets[tostring(local.dsc_data_plane_index)].project
   name        = format("%s-allow-dsc-data", var.prefix)
-  network     = each.value
-  description = "BIG-IP ConfigSync for data-plane network"
+  network     = data.google_compute_subnetwork.subnets[tostring(local.dsc_data_plane_index)].network
+  description = "BIG-IP ConfigSync support on data-plane network"
   direction   = "INGRESS"
-  source_service_accounts = [
-    var.service_account,
-  ]
-  target_service_accounts = [
-    var.service_account,
-  ]
+  source_tags = [random_id.cluster_tag.hex]
+  target_tags = [random_id.cluster_tag.hex]
   allow {
     protocol = "tcp"
     ports = [
       443,
       4353,
-      "6123-6128",
     ]
   }
   allow {

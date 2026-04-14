@@ -1,0 +1,123 @@
+# Combined data-plane and control-plane NIC runtime-init configuration file for stateless deployment scenarios.
+# NOTE: This is not suitable for production deployments - IT CONFIGURES ADMIN USER WITH A FIXED PASSWORD!
+#
+# Actions:
+# 1. DO: Configure base VE properties; single-NIC deployment will reuse management as-is from DHCP.
+#    NOTE: Other data-plane interfaces are NOT configured as they are not used in test scenarios.
+# 2. AS3 (/Common): Configure shared resources and start health check responder on wildcard for MIG health checks.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/F5Networks/f5-bigip-runtime-init/refs/heads/main/src/schema/base_schema.json
+---
+controls:
+  logLevel: info
+runtime_parameters:
+  - name: ADMIN_PASSWORD
+    type: static
+    # spell-checker: disable-next-line
+    value: 3408ytqe^f23
+  - name: SELF_IP_PRIMARY_ADDRESS
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: address
+pre_onboard_enabled:
+  - name: provision_rest
+    type: inline
+    commands:
+      - /usr/bin/setdb provision.extramb 1000 || true
+      - /usr/bin/setdb provision.restjavad.extramb 1384 || /usr/bin/setdb restjavad.useextramb true || true
+extension_packages:
+  install_operations:
+    - extensionType: do
+      extensionHash: 2338ce270d5ee12405e59d4f712b09cd111b24b5f78aee41e90f8e61ee2a36e2
+      extensionVersion: 1.47.0
+      extensionUrl: https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.47.0/f5-declarative-onboarding-1.47.0-14.noarch.rpm  # yamllint disable-line rule:line-length
+    - extensionType: as3
+      extensionHash: 69a9779a724edb9705ec22eb466f39a34d8facbc2f92336ce4ec088296d3530d
+      extensionVersion: 3.56.0
+      extensionUrl: https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v3.56.0/f5-appsvcs-3.56.0-10.noarch.rpm  # yamllint disable-line rule:line-length
+extension_services:
+  service_operations:
+    - extensionType: do
+      type: inline
+      value:
+        $schema: https://raw.githubusercontent.com/F5Networks/f5-declarative-onboarding/v1.47.0/src/schema/1.47.0/base.schema.json  # yamllint disable-line rule:line-length
+        schemaVersion: 1.47.0
+        class: Device
+        async: true
+        label: terraform-google-f5-bigip-ha-stateless
+        Common:
+          class: Tenant
+          system:
+            class: System
+            autoPhonehome: false
+          dns:
+            class: DNS
+            nameServers:
+              - 169.254.169.254
+          ntp:
+            class: NTP
+            timezone: UTC
+            servers:
+              - 169.254.169.254
+          admin:
+            class: User
+            userType: regular
+            password: '{{{ ADMIN_PASSWORD }}}'
+            shell: bash
+            partitionAccess:
+              all-partitions:
+                role: admin
+          provision:
+            class: Provision
+            ltm: nominal
+    - extensionType: as3
+      type: inline
+      value:
+        class: AS3
+        action: deploy
+        declaration:
+          $schema: https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/v3.56.0/schema/3.56.0/as3-schema.json
+          class: ADC
+          schemaVersion: 3.56.0
+          id: terraform-google-f5-bigip-ha-stateless-common
+          label: terraform-google-f5-bigip-ha-stateless-common
+          remark: Add /Common shared objects and a livez HTTP service
+          Common:
+            class: Tenant
+            Shared:
+              class: Application
+              template: shared
+              hc_source_cidrs:
+                class: Net_Address_List
+                remark: Source addresses for GCP health probes
+                # This is the set of health check sources for MIG probes
+                addresses:
+                  - 35.191.0.0/16
+                  - 130.211.0.0/22
+              hc_respond_200:
+                class: iRule
+                label: health-check-responder
+                remark: Simple HTTP responder to confirm all is well
+                iRule: |
+                  when HTTP_REQUEST {
+                      HTTP::respond 200 content OK "Content-Type" "text/plain"
+                  }
+              livez:
+                class: Service_HTTP
+                remark: Return a 200 status code for GCP health checks when alive
+                iRules:
+                  - use: hc_respond_200
+                sourceAddress:
+                  use: hc_source_cidrs
+                virtualPort: 26000
+                shareAddresses: true
+                virtualAddresses:
+                  - 0.0.0.0
+post_onboard_enabled:
+  - name: save_config
+    type: inline
+    commands:
+      - tmsh save sys config

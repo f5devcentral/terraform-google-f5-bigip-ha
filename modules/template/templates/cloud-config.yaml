@@ -1,0 +1,70 @@
+#cloud-config
+# This is a base cloud-init template that can onboard a BIG-IP with configured management interface and apply an F5
+# BIG-IP runtime-init configuration file, if provided.
+# For more details, see the module documentation at https://github.com/memes/terraform-google-f5-bigip-ha//modules/template.
+# yamllint disable rule:line-length
+# yaml-language-server: $schema=https://raw.githubusercontent.com/canonical/cloud-init/main/cloudinit/config/schemas/versions.schema.cloud-config.json
+---
+write_files:
+  - path: /config/cloud/onboard.sh
+    permissions: '0o755'
+    owner: root:root
+    encoding: gz+b64
+    content: |
+      ${indent(6, onboard_sh)}
+  - path: /config/cloud/reset_management_route.sh
+    permissions: '0755'
+    owner: root:root
+    encoding: gz+b64
+    content: |
+      ${indent(6, reset_management_route_sh)}
+  - path: /etc/systemd/system/f5-gce-onboard.service
+    permissions: '0o644'
+    owner: root:root
+    content: |
+      [Unit]
+      Description=BIG-IP onboarding
+      After=httpd.service f5-startup.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=no
+      Environment=${join(" ", [for k,v in try(onboard_env, {}): jsonencode(format("%s=%s", k, v))])}
+      ExecStart=/config/cloud/onboard.sh
+      ExecStartPost=/usr/bin/systemctl enable f5-gce-reset-management-route.service
+      ExecStartPost=/usr/bin/systemctl disable f5-gce-onboard.service
+      StandardOutput=journal+console
+      StandardError=journal+console
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/systemd/system/f5-gce-reset-management-route.service
+    permissions: '0o644'
+    owner: root:root
+    content: |
+      [Unit]
+      Description=Reset BIG-IP management route on boot, if necessary
+      After=httpd.service f5-startup.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=no
+      Environment=${join(" ", [for k,v in try(reset_management_route_env, {}): jsonencode(format("%s=%s", k, v))])}
+      ExecStart=/config/cloud/reset_management_route.sh
+      StandardOutput=journal+console
+      StandardError=journal+console
+
+      [Install]
+      WantedBy=multi-user.target
+%{ for k,v in runtime_init_configs ~}
+  - path: ${k}
+    permissions: '0o644'
+    owner: root:root
+    content: |
+      ${indent(6, v)}
+%{ endfor ~}
+
+runcmd:
+  - systemctl daemon-reload
+  - systemctl enable f5-gce-onboard.service
+  - systemctl start f5-gce-onboard.service

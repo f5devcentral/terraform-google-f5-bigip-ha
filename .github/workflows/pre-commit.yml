@@ -19,20 +19,32 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install talisman
-        run: |
-          sudo curl -sLo /usr/local/bin/talisman https://github.com/thoughtworks/talisman/releases/download/v1.32.0/talisman_linux_amd64
-          sudo chmod 0755 /usr/local/bin/talisman
+        uses: jaxxstorm/action-install-gh-release@v1
+        with:
+          repo: thoughtworks/talisman
+          extension-matching: disable
+          rename-to: talisman
+          chmod: 0755
+          tag: v1.37.0
       - name: Install terraform-docs
-        run: |
-          sudo sh -c 'curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-linux-amd64.tar.gz | tar xzf - -C /usr/local/bin'
-          sudo chmod 0755 /usr/local/bin/terraform-docs
-      - uses: ruby/setup-ruby@v1
+        uses: jaxxstorm/action-install-gh-release@v1
         with:
-          ruby-version: '3.3.0'
-          bundler-cache: true
-      - uses: actions/setup-python@v5
+          repo: terraform-docs/terraform-docs
+          tag: v0.21.0
+      - name: Install tflint
+        uses: terraform-linters/setup-tflint@v6
         with:
-          python-version: '3.12'
-      - uses: pre-commit/action@v3.0.0
+          cache: true
+          tflint_version: v0.61.0
+      - name: install opentofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --all-extras --dev
+      - run: uv run pre-commit run --show-diff-on-failure --all-files

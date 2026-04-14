@@ -1,0 +1,188 @@
+# Single data-plane NIC runtime-init configuration file for stateful active/standby deployment scenarios.
+# NOTE: This is not suitable for production deployments - IT CONFIGURES ADMIN USER WITH A FIXED PASSWORD!
+#
+# Actions:
+# 1. DO: Configure base VE properties and eth0 with self-ip, routing and MTU from metadata server; join instances into
+#    device-, trust- and config-sync groups with failover.
+#    NOTE: Other data-plane interfaces are NOT configured as they are not used in test scenarios.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/F5Networks/f5-bigip-runtime-init/refs/heads/main/src/schema/base_schema.json
+---
+controls:
+  logLevel: info
+runtime_parameters:
+  - name: ADMIN_PASSWORD
+    type: static
+    # spell-checker: disable-next-line
+    value: 3408ytqe^f23
+  - name: SELF_IP_PRIMARY_ADDRESS
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: address
+  - name: SELF_IP_PRIMARY_GATEWAY
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/gateway
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_PRIMARY_MTU
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/mtu
+    returnType: number
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: SELF_IP_PRIMARY_NETWORK
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: base
+  - name: SELF_IP_PRIMARY_SIZE
+    type: metadata
+    metadataProvider:
+      environment: gcp
+      type: network
+      index: 0
+      field: ip
+      ipcalc: bitmask
+  - name: HOSTNAME
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/hostname
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_NAME
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_name
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_ADDRESS
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_address
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+  - name: PEER_OWNER_INDEX
+    type: url
+    value: http://169.254.169.254/computeMetadata/v1/instance/attributes/bigip_ha_peer_owner_index
+    returnType: string
+    headers:
+      - name: Metadata-Flavor
+        value: Google
+pre_onboard_enabled:
+  - name: provision_rest
+    type: inline
+    commands:
+      - /usr/bin/setdb provision.extramb 1000 || true
+      - /usr/bin/setdb provision.restjavad.extramb 1384 || /usr/bin/setdb restjavad.useextramb true || true
+extension_packages:
+  install_operations:
+    - extensionType: do
+      extensionHash: 2338ce270d5ee12405e59d4f712b09cd111b24b5f78aee41e90f8e61ee2a36e2
+      extensionVersion: 1.47.0
+      extensionUrl: https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.47.0/f5-declarative-onboarding-1.47.0-14.noarch.rpm  # yamllint disable-line rule:line-length
+extension_services:
+  service_operations:
+    - extensionType: do
+      type: inline
+      value:
+        $schema: https://raw.githubusercontent.com/F5Networks/f5-declarative-onboarding/v1.47.0/src/schema/1.47.0/base.schema.json  # yamllint disable-line rule:line-length
+        schemaVersion: 1.47.0
+        class: Device
+        async: true
+        label: terraform-google-f5-bigip-ha-stateful
+        Common:
+          class: Tenant
+          system:
+            class: System
+            autoPhonehome: false
+            hostname: '{{{ HOSTNAME }}}'
+          dns:
+            class: DNS
+            nameServers:
+              - 169.254.169.254
+          ntp:
+            class: NTP
+            timezone: UTC
+            servers:
+              - 169.254.169.254
+          admin:
+            class: User
+            userType: regular
+            password: '{{{ ADMIN_PASSWORD }}}'
+            shell: bash
+            partitionAccess:
+              all-partitions:
+                role: admin
+          provision:
+            class: Provision
+            ltm: nominal
+          primary:
+            class: VLAN
+            tag: 4094
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+            interfaces:
+              - name: '1.0'
+                tagged: false
+          primary-self:
+            class: SelfIp
+            address: '{{{ SELF_IP_PRIMARY_ADDRESS }}}/32'
+            vlan: primary
+            allowService:
+              - 'tcp:80'
+              - 'tcp:443'
+              - 'tcp:4353'
+              - 'tcp:26000'
+              - 'udp:1026'
+            trafficGroup: traffic-group-local-only
+          primary-rt-gw:
+            class: Route
+            target: primary
+            network: '{{{ SELF_IP_PRIMARY_GATEWAY }}}/32'
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+          default-rt:
+            class: Route
+            gw: '{{{ SELF_IP_PRIMARY_GATEWAY }}}'
+            network: default
+            mtu: '{{{ SELF_IP_PRIMARY_MTU }}}'
+          configSync:
+            class: ConfigSync
+            configsyncIp: '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
+          failoverAddress:
+            class: FailoverUnicast
+            address: '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
+          failoverGroup:
+            class: DeviceGroup
+            type: sync-failover
+            members:
+              - '{{{ HOSTNAME }}}'
+              - '{{{ PEER_NAME }}}'
+            owner: '/Common/failoverGroup/members/{{{ PEER_OWNER_INDEX }}}'
+            autoSync: true
+            saveOnAutoSync: false
+            networkFailover: true
+            fullLoadOnSync: false
+            asmSync: false
+          trust:
+            class: DeviceTrust
+            localUsername: admin
+            localPassword: '{{{ ADMIN_PASSWORD }}}'
+            remoteHost: '{{{ PEER_ADDRESS }}}'
+            remoteUsername: admin
+            remotePassword: '{{{ ADMIN_PASSWORD }}}'
+post_onboard_enabled:
+  - name: save_config
+    type: inline
+    commands:
+      - tmsh save sys config

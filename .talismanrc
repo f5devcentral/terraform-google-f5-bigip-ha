@@ -3,11 +3,15 @@
 version: "1.0"
 fileignoreconfig:
 - filename: main.tf
-  checksum: bed85fab1bfb62455c93d17a1786f5335a0c13acd7434fec5405c4e2bf010f5c
+  checksum: 6aa8946162bf3213627fe920c9d2b6e320602dc7ec3088f255180145f2930c25
 - filename: variables.tf
-  checksum: f4c7d8c4b7c5430e4ee4ebd049c84f2620675781fba39c57f6c5b2c2495aa041
+  ignore_detectors:
+    - filecontent
+  checksum: 6953bdd0411799faee53d8cc92190540f5ff6ee4f8f84e100a95c95ecaf7f11e
 - filename: README.md
-  checksum: 16f5aa6d7b89f6424f889dd6e00dc6bf13dcc0bf7d32e9c3746cb4f6d54869a2
+  ignore_detectors:
+    - filecontent
+  checksum: b38e68f1172608bf3e7af4cf07084c1f917f9edf56e4255cc5fb3cfd3eb2bad5
 - filename: examples/ilb/main.tf
   checksum: ea0852afb2da72e64a7d73d40acdb051f85fac9e78e20ce68d6244a2bda67534
 - filename: modules/ilb/variables.tf
@@ -35,20 +39,76 @@ fileignoreconfig:
 - filename: test/fixtures/examples/forwarding-rule/main.tf
   checksum: a10f139463a809cd38092679cec2b6496245bdae0ccc79082a77c1dd847bbfa0
 - filename: test/fixtures/root/main.tf
-  checksum: 3249f8cd42c0161e3b0142e2248d3347a40705d32d0c49b83b51845942ad21a2
+  checksum: 090d27905452bb1181e5c311c0f162147c545b72f58e62f64e43644947c06a83
+  ignore_detectors:
+    - filecontent
 - filename: test/ephemeral/forwarding-rule/main.tf
   checksum: 0deca9fe92f00e13e56d0993317ae5be914361a5098b16873c31a6ff5be33a91
 - filename: test/ephemeral/ilb/variables.tf
   checksum: 97c5600be9fa18dc830199f15b560ed95d8a99ac479340d46d351089bf72a99b
 - filename: test/setup/README.md
-  checksum: d26daed4a5b1c11cb7d7521ee1e17c15925adc25dff63930bf2514bf3eea5530
+  checksum: 08afc0cbf9b8ba7dfef499eac05782f28a367b8515fb3e6ee2f95d668eaa4ff1
 - filename: kitchen.yml
-  checksum: 4551ee9c05ff63701ebde577ba10be326ab864d6ab7da6e202f342c9f79d2e9a
+  checksum: 0a6623b1a11a28da42ffa81960453d6f64e0daaa733d5a242222ce2ab70b8ac2
 - filename: test/ephemeral/nlb/variables.tf
   checksum: a0bed9c97d0e935b7adfcb14c44a5f69035cb79c1c2730a1a9e0ab0a11d17f3d
 - filename: test/ephemeral/forwarding-rule/variables.tf
   checksum: fd1ea303d44538ab0e408e93b87f675b8551cbcf404c14a9b8e5c37679f3892c
 - filename: test/setup/main.tf
-  checksum: 5d6ae889dc5d7aaf9a4e5ba20352888ed6266d40b672e758408c04012d1294dd
+  checksum: 21dfb29d8f408441881b8509f435433eb9ffab4b8260b269dd365350befb2ea7
 - filename: examples/sandwich/main.tf
   checksum: 48c5e17a44f7f261ec58c209fcb79803d515c89073a74e3c2455870c6b539e9a
+- filename: test/fixtures/root/templates/runtime-init-config.yaml
+  checksum: 2c480fcf92893ca66ab3cad7e4394734abeca404ca8a9da048fc2af6b4e5b507
+- filename: test/fixtures/stateless/templates/runtime-init-config.yaml
+  checksum: 4f0ee6ac5145def1f272e2811acaa43eac308bed8a11a958e80c90ba20dc6fda
+- filename: modules/stateless/README.md
+  checksum: 92cd7911f218cecc4eec86d2b656e8ac89aa4a9ebe4caa25778525307fa8eddc
+- filename: modules/template/README.md
+  checksum: fc62a2493283f200e85527e641e36373aa70d67f312131ca5148afcefe57c4dd
+- filename: modules/stateless/variables.tf
+  checksum: aa4c396c7003986bca8074ef7f041fbccb04110102743597bd5e21cdd355e673
+- filename: modules/template/variables.tf
+  checksum: 07a720b96d01be8aa19c9806312ec5fe744cf92a1f937e88a05b236e819960b0
+- filename: test/fixtures/stateless/main.tf
+  checksum: 57579721571d977bb34718dfbf66fba6cce6871caa5d942f7843859b5b554764
+  ignore_detectors:
+    - filecontent
+- filename: modules/template/main.tf
+  checksum: 598113cc18a6861c76ce741c7601464a695f957a4656bd680a36f45be7fd1b84
+- filename: uv.lock
+  checksum: 9d7ae04e263e4d7bed6e16388dddbf1440777ef2bfef5409624cea2ee51d9c30
+  ignore_detectors:
+    - filecontent
+- filename: .yamllint.yaml
+  checksum: 31f2487991ae12b20e7f4e98606a472e5ce53044689946c9484b07002ed568b5
+- filename: modules/template/files/onboard.sh
+  checksum: ea08a0bebf08369814aba3463a24804134c2f433f4079cb450d869dce0dae507
+- filename: tests/stateless/files/runtime-init-conf-1nic.yaml
+  checksum: 1a55a265e745039bbf652777ea634f9757534502fa3807aea789759dbaff9b69
+- filename: tests/files/runtime-init-conf.yaml
+  checksum: ea24b6e6e4e64a9db783374b3aeca6f9d277da31ce885a1355eefc17ddd4714b
+- filename: tests/stateless/files/runtime-init-conf.yaml
+  checksum: ebe508d7833d2e675cf97fc305f90cb063975e7f1445546cf6cf5870d92423b5
+- filename: tests/template/test_all_options.py
+  checksum: cfc824123f48afde8996708a6a219d24d5bec2e858784ef5bde580998e9b148d
+- filename: tests/stateless/__init__.py
+  checksum: 542c3d34c12712ff90073c194da8ea48026bac8a6274c947fbd99a14896b96de
+- filename: tests/test_combos.py
+  checksum: 0d5826118dec9f5de527046e7fe214812189a308897202caa51ad0195f695bc2
+- filename: tests/__init__.py
+  checksum: 1d6f42b6c869ee9ba0be7e74e7498d9c9f17f92ebcf942cbaf1c5cbb8bb2bb65
+- filename: tests/conftest.py
+  checksum: c2b1f5fa6c5a9afc86f8bd6c4e12db84f4c6a1b9dd1697077e44ee7882e93098
+- filename: tests/stateless/test_combos.py
+  checksum: 998f1b5a997734c951e2a8e7f6eea725b99e81cddcb248aa8028dcdb1207ddf6
+- filename: examples/stateless-nlb/templates/runtime-init-conf.yaml
+  checksum: fe83aecee008846600153147a7b090e12942a36b300bfe5a1feed36202ebb852
+- filename: examples/stateless-nlb/variables.tf
+  checksum: 3c0c5a2fc73b62bfb7388da7f077f81bec77c6f4c13765d5fa0ded68e2dfd6e4
+- filename: examples/stateless-nlb/README.md
+  checksum: 4e80bd3045f4aaf176bde97596ee637d5539eeabb70e47fc4a2caaa7431a0d40
+  ignore_detectors:
+    - filecontent
+- filename: examples/stateless-nlb/main.tf
+  checksum: 4ddcfec2f135f9f86668c0b11678e33ec0a057017227594b7d762ec94e4af699

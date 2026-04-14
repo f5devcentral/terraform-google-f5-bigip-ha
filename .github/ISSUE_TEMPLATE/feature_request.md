@@ -4,9 +4,8 @@ about: Suggest an idea for these modules
 title: ''
 labels: 'enhancement'
 assignees: ''
-
 ---
-
+<!-- markdownlint-disable first-line-heading -->
 Hello and thank you for using our Terraform module examples. Please complete
 this form to share your ideas. If you already have a proposed solution, open a
 pull request for review and link it to this issue where prompted.
