@@ -39,7 +39,7 @@ jobs:
           cache: true
           tflint_version: v0.61.0
       - name: install opentofu
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@v2
         with:
           tofu_version: 1.11.5
       - uses: actions/setup-python@v6
