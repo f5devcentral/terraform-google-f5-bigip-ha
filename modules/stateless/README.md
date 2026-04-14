@@ -8,6 +8,9 @@ F5 BIG-IP VE instances, where Google Cloud determines when instances are created
 must provide a full declarative onboarding payload appropriate to your scenario that can be applied identically to all
 instances.
 
+![BIG-IP VE and supporting resources created by module](./deployment.png)
+*Figure 1: The Google Cloud resources created by the module.*
+
 > For the purpose of this module, *stateless* is taken to mean that each BIG-IP VE instance is independent of every other
 > instance in the cluster, providing an Active-Active (all instances could handle traffic) HA deployment.
 >

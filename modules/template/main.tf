@@ -20,8 +20,7 @@ data "google_compute_image" "bigip" {
 }
 
 locals {
-  region                   = one(distinct([for subnet in data.google_compute_subnetwork.subnets : subnet.region]))
-  runtime_init_config_file = format("/config/cloud/runtime-init-conf.%s", can(jsondecode(var.runtime_init_config)) ? "json" : "yaml")
+  region = one(distinct([for subnet in data.google_compute_subnetwork.subnets : subnet.region]))
   user_data = templatefile(format("%s/templates/cloud-config.yaml", path.module), {
     onboard_sh                = base64gzip(file(format("%s/files/onboard.sh", path.module)))
     reset_management_route_sh = base64gzip(file(format("%s/files/reset_management_route.sh", path.module)))
@@ -37,13 +36,11 @@ locals {
       RUNTIME_INIT_EXTRA_ARGS = trimspace(join(" ", compact(concat([
         try(var.runtime_init_installer.skip_telemetry, false) ? "--skip-telemetry" : "",
       ]))))
-      RUNTIME_INIT_CONFIG_FILE = local.runtime_init_config_file
     }
     reset_management_route_env = {
       MGMT_INTERFACE = var.management_interface_index
     }
-    runtime_init_config_file = local.runtime_init_config_file
-    runtime_init_config      = var.runtime_init_config
+    runtime_init_configs = { for i, config in [var.runtime_init_config] : (format("/config/cloud/%02d_runtime-init-conf.%s", i, can(jsondecode(config)) ? "json" : "yaml")) => config }
   })
   metadata = var.metadata == null ? {
     user-data = local.user_data

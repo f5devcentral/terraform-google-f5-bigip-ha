@@ -25,9 +25,6 @@ MGMT_INTERFACE="${MGMT_INTERFACE:-1}"
 RUNTIME_INIT_URL="${RUNTIME_INIT_URL:-"https://cdn.f5.com/product/cloudsolutions/f5-bigip-runtime-init/v2.0.3/dist/f5-bigip-runtime-init-2.0.3-1.gz.run"}"
 # The SHA-256 checksum value to use when validating the package download. Set to SKIP to bypass checksum validation.
 RUNTIME_INIT_SHA256SUM="${RUNTIME_INIT_SHA256SUM:-"e38fabfee268d6b965a7c801ead7a5708e5766e349cfa6a19dd3add52018549a"}"
-# The path of the runtime-init configuration file to execute after the package is installed and available. Set to SKIP
-# to bypass execution of runtime-init.
-RUNTIME_INIT_CONFIG_FILE="${RUNTIME_INIT_CONFIG_FILE:-"/config/cloud/runtime-init-conf.yaml"}"
 # Additional environment variables can be set to instruct curl to use a proxy for downloads (http_proxy, https_proxy,
 # no_proxy, etc. - see curl documentation for details) or to add options to runtime-init installer
 # (RUNTIME_INIT_INSTALLER_EXTRA_ARGS) and execution (RUNTIME_INIT_EXTRA_ARGS) commands.
@@ -300,45 +297,38 @@ else
         info "Installing runtime-init package"
         set_status_attribute "runtime-init-install" "in-progress"
         # shellcheck disable=SC2086
-        bash /var/config/rest/downloads/f5-bigip-runtime-init.gz.run -- \
-            ${RUNTIME_INIT_INSTALLER_EXTRA_ARGS} --cloud gcp || \
-                error "Failed to install runtime-init: exit code $?"
+        bash /var/config/rest/downloads/f5-bigip-runtime-init.gz.run -- ${RUNTIME_INIT_INSTALLER_EXTRA_ARGS} --cloud gcp || \
+            error "Failed to install runtime-init: exit code $?"
         set_status_attribute "runtime-init-install" "complete"
     fi
 fi
-
-if [ -z "${RUNTIME_INIT_CONFIG_FILE}" ] || [ "${RUNTIME_INIT_CONFIG_FILE}" = "SKIP" ]; then
-    info "Skipping runtime-init execution, as requested"
-    set_status_attribute "runtime-init-execution" "skipped"
-else
-    if [ -f "${RUNTIME_INIT_CONFIG_FILE}" ]; then
-        if [ -x /usr/local/bin/f5-bigip-runtime-init ]; then
-            info "Executing runtime-init"
-            set_status_attribute "runtime-init-execution" "in-progress"
-            attempt=0
-            while [ "${attempt}" -lt 3 ]; do
-                # shellcheck disable=SC2086
-                /usr/local/bin/f5-bigip-runtime-init ${RUNTIME_INIT_EXTRA_ARGS} --config-file "${RUNTIME_INIT_CONFIG_FILE}"
-                retval=$?
-                [ "${retval}" -eq 0 ] && break
-                info "${attempt}: Failed to execute runtime-init: exit code: ${retval}; sleeping before retrying"
-                sleep 10
-                attempt=$((attempt+1))
-            done
-            [ "${attempt}" -ge 3 ] && \
-                error "Failed to execute runtime-init after ${attempt} tries: exit code: ${retval}"
-            set_status_attribute "runtime-init-execution" "complete"
-            info "Runtime-init configuration ${RUNTIME_INIT_CONFIG_FILE} has been applied; moving file to ${RUNTIME_INIT_CONFIG_FILE}.executed"
-            mv "${RUNTIME_INIT_CONFIG_FILE}" "${RUNTIME_INIT_CONFIG_FILE}.executed" || \
-                error "Failed to move runtime-init configuration file; exit code $?"
-        else
-            set_status_attribute "runtime-init-execution" "skipped-not-installed"
-            info "Runtime-init is not installed; skipping execution"
-        fi
-    else
-        set_status_attribute "runtime-init-execution" "config-file-missing"
-        info "Runtime-init configuration file was not found at '${RUNTIME_INIT_CONFIG_FILE}'"
-    fi
+if [ -x /usr/local/bin/f5-bigip-runtime-init ]; then
+    info "Executing runtime-init"
+    set_status_attribute "runtime-init-execution" "in-progress"
+    # Apply all runtime-init-conf JSON or YAML files in /config/cloud in sorted order to allow stacking.
+    find /config/cloud -maxdepth 1 -type f -iregex '.*_runtime-init-conf\.\(json\|yaml\)$' | sort --ignore-case | \
+        while read -r config_file; do
+            if [ -f "${config_file}" ]; then
+                attempt=0
+                while [ "${attempt}" -lt 3 ]; do
+                    # shellcheck disable=SC2086
+                    /usr/local/bin/f5-bigip-runtime-init ${RUNTIME_INIT_EXTRA_ARGS} --config-file "${config_file}"
+                    retval=$?
+                    [ "${retval}" -eq 0 ] && break
+                    info "${attempt}: Failed to execute runtime-init for ${config_file}: exit code: ${retval}; sleeping before retrying"
+                    sleep 10
+                    attempt=$((attempt+1))
+                done
+                [ "${attempt}" -ge 3 ] && \
+                    error "Failed to execute runtime-init for ${config_file} after ${attempt} tries: exit code: ${retval}"
+                info "Runtime-init configuration ${config_file} has been applied; moving file to ${config_file}.executed"
+                mv "${config_file}" "${config_file}.executed" || \
+                    error "Failed to move runtime-init configuration file ${config_file} to ${config_file}.executed; exit code $?"
+            else
+                info "Runtime-init configuration file ${config_file} was not found; skipping"
+            fi
+        done
+    set_status_attribute "runtime-init-execution" "complete"
 fi
 
 set_status_attribute "onboarding" "complete"

@@ -56,11 +56,13 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
-  - path: ${runtime_init_config_file}
+%{ for k,v in runtime_init_configs ~}
+  - path: ${k}
     permissions: '0o644'
     owner: root:root
     content: |
-      ${indent(6, runtime_init_config)}
+      ${indent(6, v)}
+%{ endfor ~}
 
 runcmd:
   - systemctl daemon-reload

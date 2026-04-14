@@ -1,7 +1,7 @@
 # BIG-IP HA on Google Cloud
 
 ![GitHub release](https://img.shields.io/github/v/release/f5devcentral/terraform-google-f5-bigip-ha?sort=semver)
-![Maintenance](https://img.shields.io/maintenance/yes/2025)
+![GitHub last commit](https://img.shields.io/github/last-commit/f5devcentral/terraform-google-f5-bigip-ha)
 [![Contributor Covenant](https://img.shields.io/badge/Code_of_conduct-Yes-4baaaa.svg)](code_of_conduct.md)
 
 > NOTE: This module is pre-release and functionality can change abruptly prior to v1.0 release. Be sure to pin to an
@@ -12,6 +12,9 @@ F5 BIG-IP VE instances, that are **ready to be joined as a sync group** - the ac
 as a group relies on manual post-deployment configuration OR the use of a full declarative onboarding payload appropriate
 to your scenario.
 
+![BIG-IP VE and supporting resources created by module](./deployment.png)
+*Figure 1: The Google Cloud resources created by the module.*
+
 > For the purpose of this module, *stateful* is taken to mean that each BIG-IP VE instance will have predetermined name,
 > IP addresses, and other fixed properties, so that each instance can be aware of the names and IP addresses of*other*
 > BIG-IP instances in the deployment. This simplifies the configuration that can be shared between the instances to
@@ -20,7 +23,8 @@ to your scenario.
 >
 > The [stateless](modules/stateless) sub-module can be used to create an Active-Active HA cluster of BIG-IP VE instances
 > that do not share configuration, where each instance is created and destroyed as part of a Google Cloud Managed
-> Instance Group. The [stateless](modules/stateless) module can be used for manual and autoscaling scenarios.
+> Instance Group. The [stateless](modules/stateless) module can be used for *manual-scaling* and *autoscaling*
+> scenarios.v
 
 ## What makes the module opinionated, and why might it be wrong for me?
 
