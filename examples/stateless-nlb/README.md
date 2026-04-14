@@ -88,8 +88,8 @@ ownership.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_admin_password"></a> [admin\_password](#module\_admin\_password) | memes/secret-manager/google | 2.2.2 |
-| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless | v0.2.0 |
-| <a name="module_template"></a> [template](#module\_template) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template | v0.2.0 |
+| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless | v0.2.1 |
+| <a name="module_template"></a> [template](#module\_template) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template | v0.2.1 |
 
 ## Resources
 
