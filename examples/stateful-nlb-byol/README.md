@@ -28,7 +28,7 @@ are:
 1. Clone the example from GitHub
 
    ```shell
-   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateful-nlb
+   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateful-nlb-byol
    ```
 
 1. Create `terraform.tfvars`, or use fixed values in [main.tf](./main.tf)
