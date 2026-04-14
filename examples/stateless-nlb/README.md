@@ -23,7 +23,7 @@ disaggregation provided by a passthrough External Network Load Balancer. The cha
 1. Clone the example from GitHub
 
    ```shell
-   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateless-nlb-byol
+   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateless-nlb
    ```
 
 1. Create `terraform.tfvars`, or use fixed values in [main.tf](./main.tf)
