@@ -10,10 +10,13 @@ Hello and thank you for using our Terraform module examples. Please complete
 this form to share your ideas. If you already have a proposed solution, open a
 pull request for review and link it to this issue where prompted.
 
-## Describe the feature
+## Describe the feature or example
 
-What are you proposing to add and what is the value added by this feature? Please
-provide as much detail as possible.
+What are you proposing to add and what is the value added by this feature? Is this a request for additional example(s)
+to help you or your customers to achieve a goal?
+
+If you are requesting an example of how to use these modules to achieve a goal addressed in one of F5's other automation
+repositories, please provide a link to the existing example or documentation.
 
 ## Are you willing to contribute?
 
