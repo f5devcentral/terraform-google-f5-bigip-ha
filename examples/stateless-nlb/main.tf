@@ -97,7 +97,7 @@ resource "google_secret_manager_secret_version" "admin_password" {
 
 # Define an instance template for the BIG-IP VMs that will be launched by a MIG.
 module "template" {
-  source          = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template?ref=0.2.0"
+  source          = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template?ref=v0.2.0"
   project_id      = var.project_id
   prefix          = var.name
   description     = <<-EOD
@@ -127,7 +127,7 @@ module "template" {
 
 # This will create a fixed size MIG where each BIG-IP instance launched will be based on the template defined above.
 module "bigip_ha" {
-  source            = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless?ref=0.2.0"
+  source            = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless?ref=v0.2.0"
   project_id        = var.project_id
   prefix            = var.name
   description       = <<-EOD
