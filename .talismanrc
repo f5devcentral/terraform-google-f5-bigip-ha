@@ -116,3 +116,23 @@ fileignoreconfig:
   checksum: c3d2b1fddfb55430de34324e12550db2db24d91ca94f99b0b6d0d9460dcd75f2
   ignore_detectors:
     - filecontent
+- filename: examples/stateful-nlb-byol/templates/runtime-init-conf.yaml
+  checksum: 2df3ae38bad7a032ddf5af81ce55f6e75ae2dda351acc6a19f3bd8f362314ac4
+- filename: examples/stateful-nlb/templates/runtime-init-conf.yaml
+  checksum: 6468b2d46d85869f265bf7ed7f65e72d6269be4a0c8a5df9ab0103ef415f4eb6
+- filename: examples/README.md
+  checksum: cac29d0bd46a5c5ca70525cc014880d3f287daa839084bc2c3e02fb18cbd056d
+  ignore_detectors:
+    - filecontent
+- filename: examples/stateful-nlb-byol/variables.tf
+  checksum: d09c8dfb90eaf475b8f16dda16b41903a2c023a405292a7da8bf2665e7fe5696
+- filename: examples/stateful-nlb-byol/README.md
+  checksum: 2c3604071f091a45afbcbe21f73cac14fee5a0abdaec60d5525b064aeba17b69
+- filename: examples/stateful-nlb/README.md
+  checksum: 3c480ecf7d9ccd42e5b7dfc3310583b383afc5135d1d009971e5245ce22c54ac
+- filename: examples/stateful-nlb-byol/main.tf
+  checksum: 8742a6361be7b76b24f4805979b98715b8e73dac2afc7d8acf55f371bde3b228
+- filename: examples/stateful-nlb/main.tf
+  checksum: 030accf7d8a6cde06a570edac9b5dcd917a6e9cdabf3714dceca3e9c6e2d091b
+- filename: examples/stateful-nlb/variables.tf
+  checksum: 5953e315652fac9e578a69550adb1cae378eacd78f837bab47515aa99360b042

@@ -1,15 +1,16 @@
-# Fixed-size Stateless active-active BIG-IP HA with Public IP (VIP) via NLB
+# Stateful active-standby BIG-IP HA with Public IP (VIP) via NLB
 
-This directory contains an example deployment of BIG-IP VEs as a GCP Managed Instance Group, with public IP address
-disaggregation provided by a passthrough External Network Load Balancer. The characteristics of this deployment are:
+This directory contains an example deployment of BIG-IP VEs in an active-standby stateful cluster, with public IP
+address disaggregation provided by a passthrough External Network Load Balancer. The characteristics of this deployment
+are:
 
-* BIG-IP VEs are created and destroyed by Google Cloud as needed to satisfy the expected count of instances
-  * BIG-IP VEs must respond to MIG health checks; instances that fail will be destroyed and recycled
-  * BIG-IP VEs cannot rely on consistent naming or synchronization between VE instances
+* BIG-IP VEs are created and destroyed by Terraform/Tofu, not by Google
+  * BIG-IP VEs do NOT need to prove they are alive
+  * BIG-IP VEs rely on consistent naming and addressing for synchronization between VE instances
 * The public IP address is assigned to an NLB, which sends traffic unchanged to BIG-IP VE instances
-  * NLB selects the BIG-IP VE to receive the connection based on NLB health check responses
+  * NLB selects the active BIG-IP VE to receive the connection based on NLB health check responses
 
-![2 BIG-IP VE instances provisioned as a Managed Instance Group with NLB](./deployment.png)
+![2 BIG-IP VE instances in active-standby configuration with NLB](./deployment.png)
 *Figure 1: The resources created by this example.*
 
 ## Prerequisites
@@ -23,7 +24,7 @@ disaggregation provided by a passthrough External Network Load Balancer. The cha
 1. Clone the example from GitHub
 
    ```shell
-   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateless-nlb
+   terraform init --from-module git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//examples/stateful-nlb
    ```
 
 1. Create `terraform.tfvars`, or use fixed values in [main.tf](./main.tf)
@@ -74,10 +75,6 @@ disaggregation provided by a passthrough External Network Load Balancer. The cha
 
 ## Suggested next steps
 
-1. Manually scale the BIG-IP VE cluster by changing the value assigned to `num_instances` in `bigip_ha` module
-   [main.tf line 146](./main.tf#L146), or attach an autoscaler if appropriate (see
-   [autoscaling-nlb](../autoscaling-nlb/) example)
-1. Investigate other NLB traffic distribution schemes for [backend service](./main.tf#L220-242)
 1. Use the [runtime-init-conf](./templates/runtime-init-conf.yaml) YAML template as a basis for a custom deployment
    that onboards the BIG-IP VEs the way you need for your environment
 1. Add SSH keys to [runtime-init-conf](./templates/runtime-init-conf.yaml) to explicitly assign to admin user, or use
@@ -108,8 +105,7 @@ ownership.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_admin_password"></a> [admin\_password](#module\_admin\_password) | memes/secret-manager/google | 2.2.2 |
-| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless | v0.2.2 |
-| <a name="module_template"></a> [template](#module\_template) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template | v0.2.2 |
+| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha | v0.2.2 |
 
 ## Resources
 
@@ -119,8 +115,8 @@ ownership.
 | [google_compute_firewall.public](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_firewall.readyz](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_forwarding_rule.vip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_forwarding_rule) | resource |
-| [google_compute_region_backend_service.bigip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service) | resource |
-| [google_compute_region_health_check.readyz](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_health_check) | resource |
+| [google_compute_http_health_check.readyz](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_http_health_check) | resource |
+| [google_compute_target_pool.bigip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_target_pool) | resource |
 | [google_secret_manager_secret_version.admin_password](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_service_account.sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_string.admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
@@ -143,8 +139,7 @@ ownership.
 | Name | Description |
 |------|-------------|
 | <a name="output_admin_password_secret_id"></a> [admin\_password\_secret\_id](#output\_admin\_password\_secret\_id) | n/a |
-| <a name="output_instance_group"></a> [instance\_group](#output\_instance\_group) | The Compute Engine instance group self-link of the stateless BIG-IP VMs. |
-| <a name="output_instance_group_manager"></a> [instance\_group\_manager](#output\_instance\_group\_manager) | The Compute Engine instance group manager self-link of the stateless BIG-IP VMs. |
+| <a name="output_self_links"></a> [self\_links](#output\_self\_links) | n/a |
 | <a name="output_vip"></a> [vip](#output\_vip) | The public VIP for backend service. |
 <!-- END_TF_DOCS -->
 <!-- markdownlint-enable no-inline-html no-bare-urls table-column-style -->

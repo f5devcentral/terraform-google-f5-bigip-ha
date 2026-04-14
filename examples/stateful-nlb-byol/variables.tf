@@ -76,6 +76,18 @@ variable "allowlist_cidrs" {
   EOD
 }
 
+variable "license_keys" {
+  type     = list(string)
+  nullable = false
+  validation {
+    condition     = length(compact(distinct(var.license_keys))) == 2
+    error_message = "Two unique license keys must be provided."
+  }
+  description = <<-EOD
+  The pair of F5 BIG-IP license keys to assign to the instances.
+  EOD
+}
+
 variable "metadata" {
   type        = map(string)
   nullable    = true

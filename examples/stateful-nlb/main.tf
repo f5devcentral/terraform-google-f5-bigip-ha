@@ -20,7 +20,7 @@ provider "google" {
   # Apply a consistent set of labels to all resources that accept labels.
   default_labels = merge({
     module   = "terraform-google-f5-bigip-ha"
-    scenario = "stateless-nlb"
+    scenario = "stateful-nlb"
   }, var.labels == null ? {} : var.labels)
 }
 
@@ -96,12 +96,16 @@ resource "google_secret_manager_secret_version" "admin_password" {
 }
 
 # Define an instance template for the BIG-IP VMs that will be launched by a MIG.
-module "template" {
-  source          = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/template?ref=v0.2.2"
-  project_id      = var.project_id
-  prefix          = var.name
+module "bigip_ha" {
+  source     = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v0.2.2"
+  project_id = var.project_id
+  prefix     = var.name
+  # For consistent and predictable naming, it is important to set the common DNS domain name to use with instances; for
+  # example 'your-domain.com'. Instances will be given the host name "{prefix}-0n.{host_domain}".
+  # NOTE: BIG-IP hostnames have a limit of 65 characters.
+  host_domain     = "example.com"
   description     = <<-EOD
-  An example BIG-IP stateless HA instance template for stateless-nlb scenario.
+  An example BIG-IP active-standby HA deployment for stateful-nlb scenario.
   EOD
   service_account = google_service_account.sa.email
   interfaces      = var.interfaces
@@ -119,66 +123,24 @@ module "template" {
   ]
 }
 
-# This will create a fixed size MIG where each BIG-IP instance launched will be based on the template defined above.
-module "bigip_ha" {
-  source            = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha//modules/stateless?ref=v0.2.2"
-  project_id        = var.project_id
-  prefix            = var.name
-  description       = <<-EOD
-  An example Managed Instance Group for BIG-IP HA stateless-nlb scenario.
-  EOD
-  instance_template = module.template.self_link
-  #
-  # NOTE: These variables are set to default values but included to show how to override default behavior.
-  #
-  # The fixed number of BIG-IP instances to manage; if this value is changed and `tofu apply` or `terraform apply` is
-  # re-run, the MIG will add or remove BIG-IP instances to match.
-  num_instances = 2
-
-  # The MIG will destroy BIG-IP instances that are not healthy; this variable is used to define the properties for a
-  # simple HTTP GET to a port that should respond with 200 for as long as the BIG-IP is alive; failure to respond to
-  # health check probes will cause the instance to be terminated and replaced.
-  health_check = {
-    # This must match the virtual server port that BIG-IP uses to communicate that it is alive. See line X in example
-    # runtime-init-conf.yaml.
-    port = 26000
-    # Give the BIG-IP 10 minutes to fully onboard before assuming there is a problem.
-    initial_delay_sec = 600
-  }
-
-  depends_on = [
-    module.template,
-  ]
-}
-
-# This is the health check that the backend service uses to determine which managed instances receive traffic. This
+# This is the health check that the target pool uses to determine which managed instances receive traffic. This
 # should correspond to a readyz virtual server declared that responds with 200 when the instance is ready to handle
-# traffic distribution.
-# NOTE: It is a best practice to use separate health checks for instance health (livez health check defined in stateless
-# module) and traffic distribution (readyz, defined below) as these are distinct concerns and so that operations that
-# may effect traffic management (rolling out a declaration update, for example) do not cause the instances to be
-# replaced because they are determined to be unhealthy.
-resource "google_compute_region_health_check" "readyz" {
+# traffic distribution. It is expected that only the active VE in a group will respond with success.
+resource "google_compute_http_health_check" "readyz" {
   project             = var.project_id
   name                = format("%s-readyz", var.name)
-  region              = var.region
   check_interval_sec  = 10
   timeout_sec         = 1
   healthy_threshold   = 1
   unhealthy_threshold = 2
-  http_health_check {
-    # This port value must match the correspond readyz virtual server; see line 249 in example runtime-init-conf.yaml.
-    port               = 26000
-    request_path       = "/"
-    port_specification = "USE_FIXED_PORT"
-  }
+  # This port value must match the correspond readyz virtual server; see line 315 in example runtime-init-conf.yaml.
+  port         = 26000
+  request_path = "/"
 }
 
 
 # By default, Google Cloud imposes a default DENY ingress rule; to allow NLB health check probes to reach the BIG-IP a
 # rule must be created on network attached to external interface (eth0).
-# NOTE: The HA module creates a similar rule for MIG health checks but that does not include all the ranges necessary
-# for NLBs; we explicitly list them here in case they change over time.
 resource "google_compute_firewall" "readyz" {
   project     = var.project_id
   name        = format("%s-allow-readyz", var.name)
@@ -207,27 +169,21 @@ resource "google_compute_firewall" "readyz" {
   ]
 }
 
-resource "google_compute_region_backend_service" "bigip" {
+
+resource "google_compute_target_pool" "bigip" {
   project     = var.project_id
   name        = var.name
   description = <<-EOD
-    An example backend-service that sends all traffic to BIG-IP instances in a managed instance group that are ready.
-    EOD
+  F5 BIG-IP target pool for VEs in stateless-nlb example.
+  EOD
   region      = var.region
   health_checks = [
-    google_compute_region_health_check.readyz.self_link,
+    google_compute_http_health_check.readyz.self_link,
   ]
-  load_balancing_scheme = "EXTERNAL"
-  locality_lb_policy    = "MAGLEV"
-  protocol              = "TCP"
-  backend {
-    balancing_mode = "CONNECTION"
-    group          = module.bigip_ha.instance_group
-  }
+  instances = [for k, v in module.bigip_ha.self_links : v]
 
   depends_on = [
     module.bigip_ha,
-    google_compute_region_health_check.readyz,
   ]
 }
 
@@ -238,15 +194,14 @@ resource "google_compute_forwarding_rule" "vip" {
     An example forwarding-rule that sends all TCP traffic to the BIG-IP managed instances.
     EOD
   region                = var.region
-  backend_service       = google_compute_region_backend_service.bigip.id
+  target                = google_compute_target_pool.bigip.id
   ip_address            = google_compute_address.vip.id
   ip_protocol           = "TCP"
-  ip_version            = "IPV4"
   all_ports             = true
   load_balancing_scheme = "EXTERNAL"
 
   depends_on = [
-    google_compute_region_backend_service.bigip,
+    google_compute_target_pool.bigip,
   ]
 }
 
