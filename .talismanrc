@@ -112,3 +112,7 @@ fileignoreconfig:
     - filecontent
 - filename: examples/stateless-nlb/main.tf
   checksum: 4ddcfec2f135f9f86668c0b11678e33ec0a057017227594b7d762ec94e4af699
+- filename: TROUBLESHOOTING.md
+  checksum: c3d2b1fddfb55430de34324e12550db2db24d91ca94f99b0b6d0d9460dcd75f2
+  ignore_detectors:
+    - filecontent
