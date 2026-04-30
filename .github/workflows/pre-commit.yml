@@ -32,16 +32,16 @@ jobs:
         uses: jaxxstorm/action-install-gh-release@v1
         with:
           repo: terraform-docs/terraform-docs
-          tag: v0.21.0
+          tag: v0.22.0
       - name: Install tflint
         uses: terraform-linters/setup-tflint@v6
         with:
           cache: true
-          tflint_version: v0.61.0
+          tflint_version: v0.62.0
       - name: install opentofu
         uses: opentofu/setup-opentofu@v2
         with:
-          tofu_version: 1.11.5
+          tofu_version: 1.11.6
       - uses: actions/setup-python@v6
         with:
           python-version-file: ".python-version"
