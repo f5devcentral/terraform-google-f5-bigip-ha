@@ -52,6 +52,7 @@
         "runcmd",
         "secretmanager",
         "setdb",
+        "sles",
         "sysdb",
         "templatefile",
         "testinfra",
