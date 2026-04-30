@@ -67,7 +67,7 @@ be joined into a device sync group when combined with additional effort/configur
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 7.1 |
 
@@ -78,7 +78,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_firewall.livez](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_health_check.livez](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_health_check) | resource |
 | [google_compute_region_instance_group_manager.mig](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_instance_group_manager) | resource |
@@ -89,7 +89,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_instance_template"></a> [instance\_template](#input\_instance\_template) | The Compute Engine Instance Template self-link or qualified identifier that contains the common instance parameters to<br/>apply to all instances launched by this module.<br/>NOTE: If the module variables `labels`, and `metadata` are not empty they will be merged with the equivalent values<br/>contained in the Instance Template. | `string` | n/a | yes |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | The prefix to use when naming resources managed by this module. Must be RFC1035 compliant and between 1 and 37<br/>characters in length, inclusive. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project identifier where the BIG-IP instances will be created. | `string` | n/a | yes |
@@ -104,7 +104,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_instance_group"></a> [instance\_group](#output\_instance\_group) | The Compute Engine instance group self-link of the stateless BIG-IP VMs. |
 | <a name="output_instance_group_manager"></a> [instance\_group\_manager](#output\_instance\_group\_manager) | The Compute Engine instance group manager self-link of the stateless BIG-IP VMs. |
 <!-- END_TF_DOCS -->

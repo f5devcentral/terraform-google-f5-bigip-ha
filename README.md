@@ -105,7 +105,7 @@ ease creation and management of a stateful HA cluster.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 7.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.8 |
@@ -117,7 +117,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_address.dsc_control_plane](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_address) | resource |
 | [google_compute_address.dsc_data_plane](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_address) | resource |
 | [google_compute_firewall.data_sync](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
@@ -132,7 +132,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_interfaces"></a> [interfaces](#input\_interfaces) | Defines the subnetworks that will be added to the BIG-IP VE instances, and an optional flag to assign a public IP<br/>address to the interface. The first entry will become attached to eth0, the second to eth1, etc. In a standard 2+ NIC<br/>deployment on GCP it is expected that the second entry will be used for BIG-IP management interface; if you want to<br/>change this use the variable `management_interface_index` to indicate the correct zero-based interface to use. | <pre>list(object({<br/>    subnet_id = string<br/>    public_ip = optional(bool, null)<br/>    nic_type  = optional(string, null)<br/>  }))</pre> | n/a | yes |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | The prefix to use when naming resources managed by this module. Must be RFC1035 compliant and between 1 and 37<br/>characters in length, inclusive. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project identifier where the BIG-IP instances will be created. | `string` | n/a | yes |
@@ -160,7 +160,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_cluster_tag"></a> [cluster\_tag](#output\_cluster\_tag) | The network tag generated to uniquely identify the instances in this HA cluster. |
 | <a name="output_instances_by_zone"></a> [instances\_by\_zone](#output\_instances\_by\_zone) | A map of Compute Engine zones to a list of instance self-links. |
 | <a name="output_names"></a> [names](#output\_names) | The instance names of the BIG-IPs. |
