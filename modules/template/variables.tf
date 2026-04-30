@@ -259,7 +259,7 @@ variable "runtime_init_config" {
 
 variable "runtime_init_installer" {
   type = object({
-    url                          = optional(string, "https://github.com/F5Networks/f5-bigip-runtime-init/releases/download/2.0.3/f5-bigip-runtime-init-2.0.3-1.gz.run")
+    url                          = optional(string, "https://cdn.f5.com/product/cloudsolutions/f5-bigip-runtime-init/v2.0.3/dist/f5-bigip-runtime-init-2.0.3-1.gz.run")
     sha256sum                    = optional(string, "e38fabfee268d6b965a7c801ead7a5708e5766e349cfa6a19dd3add52018549a")
     skip_telemetry               = optional(bool, false)
     skip_toolchain_metadata_sync = optional(bool, false)

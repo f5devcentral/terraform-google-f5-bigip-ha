@@ -65,7 +65,7 @@ fileignoreconfig:
 - filename: modules/stateless/README.md
   checksum: 92cd7911f218cecc4eec86d2b656e8ac89aa4a9ebe4caa25778525307fa8eddc
 - filename: modules/template/README.md
-  checksum: fc62a2493283f200e85527e641e36373aa70d67f312131ca5148afcefe57c4dd
+  checksum: fb34337e9c22812de7f33a00f962229f3731cae9c2cdf4d37ebf75210be1f289
 - filename: modules/stateless/variables.tf
   checksum: aa4c396c7003986bca8074ef7f041fbccb04110102743597bd5e21cdd355e673
 - filename: modules/template/variables.tf
