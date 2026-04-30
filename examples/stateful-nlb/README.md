@@ -49,6 +49,10 @@ are:
    allowlist_cidrs = [
       "a.b.c.d/xx",
    ]
+   # Optional, but required for example to allow access to management interfaces if a suitable rule does not already exist.
+   mgmt_allowlist_cidrs = [
+      "a.b.c.d/xx",
+   ]
    ```
 
 1. Provision the BIG-IP VE HA cluster
@@ -105,13 +109,14 @@ ownership.
 | Name | Source | Version |
 | ---- | ------ | ------- |
 | <a name="module_admin_password"></a> [admin\_password](#module\_admin\_password) | memes/secret-manager/google | 2.2.2 |
-| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha | v0.2.2 |
+| <a name="module_bigip_ha"></a> [bigip\_ha](#module\_bigip\_ha) | git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha | v0.2.3 |
 
 ## Resources
 
 | Name | Type |
 | ---- | ---- |
 | [google_compute_address.vip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_address) | resource |
+| [google_compute_firewall.mgmt](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_firewall.public](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_firewall.readyz](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_forwarding_rule.vip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_forwarding_rule) | resource |
@@ -121,6 +126,7 @@ ownership.
 | [google_service_account.sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_string.admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [google_compute_subnetwork.external](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
+| [google_compute_subnetwork.management](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
 ## Inputs
 
@@ -133,6 +139,7 @@ ownership.
 | <a name="input_allowlist_cidrs"></a> [allowlist\_cidrs](#input\_allowlist\_cidrs) | An optional list of CIDRs to be permitted access to BIG-IP instances via public VIP. Default is ["0.0.0.0/0"]. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | An optional map of string key:value pairs that will be applied to all resources created that accept labels, overriding<br/>the value present in the Instance Template. Default is null. | `map(string)` | `null` | no |
 | <a name="input_metadata"></a> [metadata](#input\_metadata) | An optional map of metadata strings to add to all BIG-IP instances. | `map(string)` | `null` | no |
+| <a name="input_mgmt_allowlist_cidrs"></a> [mgmt\_allowlist\_cidrs](#input\_mgmt\_allowlist\_cidrs) | An optional list of CIDRs to be permitted access to BIG-IP management interfaces. If the list is not null (default)<br/>and not empty, an example GCP Firewall rule will be created to allow access to management interfaces. | `list(string)` | `null` | no |
 
 ## Outputs
 

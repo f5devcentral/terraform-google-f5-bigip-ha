@@ -30,6 +30,7 @@
         "iface",
         "ipcalc",
         "jsonencode",
+        "jumphost",
         "livez",
         "managementeth",
         "markdownlint",

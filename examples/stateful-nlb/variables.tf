@@ -84,3 +84,17 @@ variable "metadata" {
   An optional map of metadata strings to add to all BIG-IP instances.
   EOD
 }
+
+variable "mgmt_allowlist_cidrs" {
+  type     = list(string)
+  nullable = true
+  validation {
+    condition     = var.mgmt_allowlist_cidrs == null ? true : alltrue([for cidr in var.mgmt_allowlist_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Each mgmt_allowlist_cidrs entry mus be a valid IPv4 or IPv6 cidr."
+  }
+  default     = null
+  description = <<-EOD
+  An optional list of CIDRs to be permitted access to BIG-IP management interfaces. If the list is not null (default)
+  and not empty, an example GCP Firewall rule will be created to allow access to management interfaces.
+  EOD
+}

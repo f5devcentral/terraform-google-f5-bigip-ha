@@ -16,6 +16,10 @@ data "google_compute_subnetwork" "external" {
   self_link = var.interfaces[0].subnet_id
 }
 
+data "google_compute_subnetwork" "management" {
+  self_link = var.interfaces[1].subnet_id
+}
+
 provider "google" {
   # Apply a consistent set of labels to all resources that accept labels.
   default_labels = merge({
@@ -97,7 +101,7 @@ resource "google_secret_manager_secret_version" "admin_password" {
 
 # Define an instance template for the BIG-IP VMs that will be launched by a MIG.
 module "bigip_ha" {
-  source     = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v0.2.2"
+  source     = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v0.2.3"
   project_id = var.project_id
   prefix     = var.name
 
@@ -218,7 +222,6 @@ resource "google_compute_forwarding_rule" "vip" {
   ]
 }
 
-
 # By default, Google Cloud imposes a default DENY ingress rule; to allow BIG-IP instances to receive traffic from the
 # public internet it must allow ingress from they must be allowed to connect to the VMs.
 resource "google_compute_firewall" "public" {
@@ -235,6 +238,28 @@ resource "google_compute_firewall" "public" {
     protocol = "tcp"
     ports = [
       80,
+      443,
+    ]
+  }
+}
+
+# By default, Google Cloud imposes a default DENY ingress rule; to allow access to BIG-IP management console from public
+# sources or private addresses routed via jumphost or VPC.
+resource "google_compute_firewall" "mgmt" {
+  for_each      = try(length(var.mgmt_allowlist_cidrs), 0) > 0 ? { sources = var.mgmt_allowlist_cidrs } : {}
+  project       = var.project_id
+  name          = format("%s-allow-bigip-mgmt", var.name)
+  network       = data.google_compute_subnetwork.management.network
+  description   = "Allow management access to BIG-IP from given sources"
+  direction     = "INGRESS"
+  source_ranges = each.value
+  target_service_accounts = [
+    google_service_account.sa.email,
+  ]
+  allow {
+    protocol = "tcp"
+    ports = [
+      22,
       443,
     ]
   }

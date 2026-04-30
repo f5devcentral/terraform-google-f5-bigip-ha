@@ -24,7 +24,7 @@ to your scenario.
 > The [stateless](modules/stateless) sub-module can be used to create an Active-Active HA cluster of BIG-IP VE instances
 > that do not share configuration, where each instance is created and destroyed as part of a Google Cloud Managed
 > Instance Group. The [stateless](modules/stateless) module can be used for *manual-scaling* and *autoscaling*
-> scenarios.v
+> scenarios.
 
 ## What makes the module opinionated, and why might it be wrong for me?
 
@@ -32,6 +32,19 @@ You can roll your own HA deployment using F5's published [BIG-IP on Google Cloud
 deploying a set of VE instances that can be joined into a device sync group, but it has defaults for consistency with
 other CSPs that can make it harder to create a group during instantiation. This module makes the following choices to
 ease creation and management of a stateful HA cluster.
+
+1. Access control for data-plane traffic and control-plane
+
+   > OPINION: Firewall rules for general data-plane and control-plane access is the responsibility of the module
+   > consumer.
+
+   There are too many permutations for simple and hierarchical firewall rules in GCP; some organizations may prefer to
+   use Compute Engine tags, others will use source and target addresses, or service accounts. For this reason the
+   module will not create Firewall rules for data-plane traffic or operator access to control-plane,
+   *other than the rules required for BIG-IP ConfigSync and Failover group operations.*
+
+   The [examples](./examples/) include example firewall rules for public VIP and operator access which can be used
+   as starting points.
 
 1. Virtual machine naming
 
@@ -43,7 +56,7 @@ ease creation and management of a stateful HA cluster.
 
    The `instances` variable can be used to override this behavior and allow you to set the name of every instance explicitly.
 
-2. Subnetwork and IP addressing
+1. Subnetwork and IP addressing
 
    > OPINION: Subnetworks used and addressing flags should be consistent on all created instances, and the cluster should
    > be *regional* or *zonal*.
@@ -57,7 +70,7 @@ ease creation and management of a stateful HA cluster.
 
    The `instances` variable can be used to assign per-instance IP addressing.
 
-3. Metadata - provide cluster onboarding information as instance metadata values
+1. Metadata - provide cluster onboarding information as instance metadata values
 
    > OPINION: Enable declarative onboarding for arbitrary clusters with sync group members without relying on prior
    > knowledge of primary IP addresses.
@@ -74,7 +87,7 @@ ease creation and management of a stateful HA cluster.
    **NOTE:** The effective metadata value assigned to each BIG-IP VE is the result of merging the defined values above,
    the `metadata` input variable if not null or empty, and any per-instance metadata from `instances` input variable.
 
-4. Overriding per-instance defaults
+1. Overriding per-instance defaults
 
    > OPINION: Consumers of the module should be able to customize VM names, assign primary and secondary IP addresses,
    > and metadata to named instances.
@@ -87,7 +100,7 @@ ease creation and management of a stateful HA cluster.
    > not null or empty, a VM will be created for each key in `instances`, ignoring the value of `prefix` and
    `num_instances`.
 
-5. Module responsibility for onboarding stops at management interface configuration and launching of runtime-init
+1. Module responsibility for onboarding stops at management interface configuration and launching of runtime-init
 
    > OPINION: Consumers of the module must provide a runtime-init configuration to set passwords, enable data-plane, and
    > add applications, etc.
