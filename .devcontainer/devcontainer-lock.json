@@ -1,0 +1,44 @@
+{
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "1.9.1",
+      "resolved": "ghcr.io/devcontainers/features/docker-outside-of-docker@sha256:dc89605f01ff2f24252c61f7c8ba2a58ccdbc14f2ebf87a7952d9e2b89834850",
+      "integrity": "sha256:dc89605f01ff2f24252c61f7c8ba2a58ccdbc14f2ebf87a7952d9e2b89834850"
+    },
+    "ghcr.io/memes/devcontainers-features/direnv:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/direnv@sha256:5805278468f5403e2ffbd0aa0f4ce59bf3fc54acc7fe754908d203a6a43704b6",
+      "integrity": "sha256:5805278468f5403e2ffbd0aa0f4ce59bf3fc54acc7fe754908d203a6a43704b6"
+    },
+    "ghcr.io/memes/devcontainers-features/google-cloud-cli:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/google-cloud-cli@sha256:7869b755bb656bfa43c8d887d3bc4931b3bfed36c5fe6d79afe41a96893534d8",
+      "integrity": "sha256:7869b755bb656bfa43c8d887d3bc4931b3bfed36c5fe6d79afe41a96893534d8"
+    },
+    "ghcr.io/memes/devcontainers-features/opentofu:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/opentofu@sha256:bb61217af5fa484dfa6bdfdb17778b98db4df56a9b743dc9a9a7dce5c4b67105",
+      "integrity": "sha256:bb61217af5fa484dfa6bdfdb17778b98db4df56a9b743dc9a9a7dce5c4b67105"
+    },
+    "ghcr.io/memes/devcontainers-features/starship:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/starship@sha256:bd7bca02af0d5237ca12002890ba34ad973bcac267dba1d22def32496db07d1b",
+      "integrity": "sha256:bd7bca02af0d5237ca12002890ba34ad973bcac267dba1d22def32496db07d1b"
+    },
+    "ghcr.io/memes/devcontainers-features/talisman:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/talisman@sha256:c14d0e3e4bf494629461dc2ad0785b3613451460ec1dc3b58be3ba7e861fff0f",
+      "integrity": "sha256:c14d0e3e4bf494629461dc2ad0785b3613451460ec1dc3b58be3ba7e861fff0f"
+    },
+    "ghcr.io/memes/devcontainers-features/terraform-docs:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/terraform-docs@sha256:ef2d87e42af282fd30b766a2cc3e987a0d6f4ac57bc33608234c49d8e84675fd",
+      "integrity": "sha256:ef2d87e42af282fd30b766a2cc3e987a0d6f4ac57bc33608234c49d8e84675fd"
+    },
+    "ghcr.io/memes/devcontainers-features/tflint:1": {
+      "version": "1.1.1",
+      "resolved": "ghcr.io/memes/devcontainers-features/tflint@sha256:8270720f145d5c46ff28de7f22e31c4f55bbf981a11e6ffd69736163c51bfd99",
+      "integrity": "sha256:8270720f145d5c46ff28de7f22e31c4f55bbf981a11e6ffd69736163c51bfd99"
+    }
+  }
+}
