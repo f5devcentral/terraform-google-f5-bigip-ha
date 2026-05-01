@@ -26,8 +26,8 @@ DEFAULT_INSTANCE_GROUP_MANAGER_DESCRIPTION_PATTERN = re.compile(
 DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN = re.compile(
     r"projects/([a-z][a-z0-9-]{4,28}[a-z0-9])/regions/([a-z][a-z-]+[0-9])/instanceGroupManagers/([a-z](?:[a-z0-9-]{0,61}[a-z0-9])?)$",
 )
-DEFAULT_MANAGED_INSTANCE_EXPECTED_ACTION = "NONE"
-DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATE = "HEALTHY"
+DEFAULT_MANAGED_INSTANCE_EXPECTED_ACTIONS = ["CREATING", "NONE", "STARTING", "VERIFYING"]
+DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATES = ["HEALTHY"]
 DEFAULT_INSTANCE_GROUP_DESCRIPTION_PATTERN = re.compile(
     r"^This instance group is controlled by Regional Instance Group Manager '[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?'.",
 )
@@ -255,7 +255,7 @@ def default_assert_managed_instance(
 ) -> None:
     """Raise an AssertionError if the ManagedInstance object does not meet expectations."""
     if expected_actions is None:
-        expected_actions = [DEFAULT_MANAGED_INSTANCE_EXPECTED_ACTION]
+        expected_actions = DEFAULT_MANAGED_INSTANCE_EXPECTED_ACTIONS
     assert instance is not None
     assert instance.current_action in expected_actions
 
@@ -266,7 +266,7 @@ def default_assert_managed_instance_instance_health(
 ) -> None:
     """Raise an AssertionError if the sequence of ManagedInstanceInstanceHealth objects do not meet expectations."""
     if expected_states is None:
-        expected_states = [DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATE]
+        expected_states = DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATES
     assert values is not None
     assert len(values) == 1
     for health in values:
