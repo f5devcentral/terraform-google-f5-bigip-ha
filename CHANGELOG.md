@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.3](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.2.2...v0.2.3) (2026-05-01)
+
+
+### Bug Fixes
+
+* Add management firewall rule to examples ([439dac9](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/439dac95e1cc5e5de45696632e3bcc3aac092565))
+* **deps:** Update python dependencies ([d543b89](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/d543b89a1c8af2bb4f5f88022c3e0d65f3554c14))
+* Download BIG-IP runtime-init from F5 CDN ([e0cc1fb](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/e0cc1fbf39d45fe90d1727a71c704649393a2708))
+
 ## [0.2.2](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.2.1...v0.2.2) (2026-04-14)
 
 
