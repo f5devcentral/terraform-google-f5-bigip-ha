@@ -40,15 +40,12 @@ def subnet_self_links(
     subnet_ranges: list[ipaddress.IPv4Network],
     network_builder: Callable[..., str],
     subnet_builder: Callable[..., str],
-    allow_ingress_firewall_builder: Callable[..., str],
 ) -> list[str]:
     """Create testing VPC subnets for external, management, and internal interfaces, returning their self-links."""
     subnets: list[str] = []
     for i, cidr in enumerate(subnet_ranges):
         vpc_name = f"{fixture_name}-{i}"
         network_self_link = network_builder(name=vpc_name)
-        if i == 1:
-            allow_ingress_firewall_builder(network=network_self_link, name=vpc_name)
         subnets.append(subnet_builder(name=vpc_name, cidr=str(cidr), network_self_link=network_self_link))
     return subnets
 
@@ -85,6 +82,9 @@ def fixture_output(
                 "block-project-ssh-keys": "TRUE",
                 "enable-guest-attributes": "TRUE",
             },
+            "mgmt_allowlist_cidrs": [
+                source_cidr,
+            ],
         },
     ) as output:
         yield output

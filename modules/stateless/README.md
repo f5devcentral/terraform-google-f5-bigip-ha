@@ -23,6 +23,19 @@ F5's published [BIG-IP on Google Cloud Terraform module][upstream] can be used t
 be joined into a device sync group when combined with additional effort/configuration, but it has no support for
 *stateless* clusters of BIG-IP VE instances.
 
+1. Access control for data-plane traffic and control-plane
+
+   > OPINION: Firewall rules for general data-plane and control-plane access is the responsibility of the module
+   > consumer.
+
+   There are too many permutations for simple and hierarchical firewall rules in GCP; some organizations may prefer to
+   use Compute Engine tags, others will use source and target addresses, or service accounts. For this reason the
+   module will not create Firewall rules for data-plane traffic or operator access to control-plane,
+   *other than the rule required for MIG health checks.*
+
+   The [examples](./examples/) include example firewall rules for public VIP and operator access which can be used
+   as starting points.
+
 1. Virtual machine lifecycle
 
    > OPINION: Google Cloud will be responsible for launching and terminating BIG-IP VE instances as needed.
@@ -35,7 +48,7 @@ be joined into a device sync group when combined with additional effort/configur
 
    > NOTE: Per-instance naming or lifecycle management is not supported for *stateless* clusters.
 
-2. Subnetwork and IP addressing
+1. Subnetwork and IP addressing
 
    > OPINION: Subnetworks used and addressing flags should be consistent on all created instances, and the cluster should
    > be *regional* or *zonal*.
@@ -49,7 +62,7 @@ be joined into a device sync group when combined with additional effort/configur
 
    > NOTE: Per-instance IP addressing is not supported for *stateless* clusters.
 
-3. Module responsibility for onboarding stops at runtime-init
+1. Module responsibility for onboarding stops at runtime-init
 
    > OPINION: Consumers of the module must provide a runtime-init configuration to set passwords, enable data-plane, and
    > add applications, etc.
