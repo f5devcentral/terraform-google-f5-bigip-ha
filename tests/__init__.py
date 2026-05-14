@@ -28,6 +28,7 @@ ADMIN_USER_PASSWORD = "3408ytqe^f23"  # spell-checker: disable-line
 
 # The BIG-IP version and image to test
 BIG_IP_IMAGES = {
+    "21.1.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-0-0-payg-good-1gbps-260504135337",
     "21.0.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-0-0-1-0-0-13-payg-good-1gbps-260128095422",
     "17.5.1": "projects/f5-7626-networks-public/global/images/f5-bigip-17-5-1-5-0-0-6-payg-good-1gbps-260227021543",
     "16.1.6": "projects/f5-7626-networks-public/global/images/f5-bigip-16-1-6-1-0-0-11-payg-good-1gbps-251008153005",
