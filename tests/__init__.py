@@ -26,13 +26,13 @@ type AsserterFunc = Callable[[int | str | None], None]
 # This must match the value hard-coded in the runtime-init files.
 ADMIN_USER_PASSWORD = "3408ytqe^f23"  # spell-checker: disable-line
 
-# The BIG-IP version and image to test
+# The BIG-IP version and image to test, constrained to the latest available PAYG Good 1Gbps image that aligns with the
+# "Major Release, Minor Release, and Long-Term Stability Release versions supported with active software development" as
+# found at https://my.f5.com/manage/s/article/K5903 at time of commit.
 BIG_IP_IMAGES = {
-    "21.1.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-0-0-payg-good-1gbps-260504135337",
-    "21.0.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-0-0-1-0-0-13-payg-good-1gbps-260128095422",
-    "17.5.1": "projects/f5-7626-networks-public/global/images/f5-bigip-17-5-1-5-0-0-6-payg-good-1gbps-260227021543",
-    "16.1.6": "projects/f5-7626-networks-public/global/images/f5-bigip-16-1-6-1-0-0-11-payg-good-1gbps-251008153005",
-    "15.1.10": "projects/f5-7626-networks-public/global/images/f5-bigip-15-1-10-8-0-0-30-payg-good-1gbps-251008214435",
+    "21.1.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-4-0-0-3-payg-good-1gbps-261023033836",
+    "17.5.1": "projects/f5-7626-networks-public/global/images/f5-bigip-17-5-1-9-0-174-12-payg-good-1gbps-260922153225",
+    "17.1.3": "projects/f5-7626-networks-public/global/images/f5-bigip-17-1-3-7-0-0-4-payg-good-1gbps-261023030117",
 }
 
 # Test scenarios will be built that are the product of BIG-IP versions and various NIC assignments; since these tests
@@ -623,7 +623,7 @@ def default_assert_tags(tags: compute_v1.Tags | None, expected_tags: list[str] |
 
 
 class Scenario:
-    """Encapsulates a single BIG-IP version + NIC count stateful test scenario."""
+    """Encapsulates a single BIG-IP version + NIC count test scenario."""
 
     def __init__(
         self,
@@ -631,7 +631,7 @@ class Scenario:
         nic_count: int,
         prefix: str | None = None,
     ) -> None:
-        """Initialize a StatefulScenario."""
+        """Initialize a Scenario."""
         if bigip_key not in BIG_IP_IMAGES:
             raise ValueError(f"Unknown BIG-IP key '{bigip_key}'")  # noqa: EM102, TRY003
         if nic_count < 1 or nic_count > 8:  # noqa: PLR2004
