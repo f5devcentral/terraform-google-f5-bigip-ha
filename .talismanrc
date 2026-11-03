@@ -145,4 +145,4 @@ fileignoreconfig:
 - filename: tests/examples/test_stateless_nlb.py
   checksum: d1d8910c33161523e60a68d215dd82bf1cac1555a0381b56b28e5b6b7d60f16b
 - filename: .devcontainer/devcontainer-lock.json
-  checksum: cdb1efbc4651d3bf34a27acad3b05e907b37d01b626e7e70740f04475692ec10
+  checksum: e0a025326517f423034b5a2da60370230435d8911e5a08ff317f43f876eeb110

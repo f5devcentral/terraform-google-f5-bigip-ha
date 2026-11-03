@@ -3,7 +3,7 @@ name = "terraform-google-f5-bigip-ha"
 version = "0.0.1"
 description = "Test harness for Terraform/Tofu module"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.15"
 # spell-checker: disable
 dependencies = [
     "google-cloud-compute>=1.47.0",
@@ -28,7 +28,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 indent-width = 4
-target-version = "py313"
+target-version = "py315"
 
 [tool.ruff.lint]
 ignore = []
