@@ -2,7 +2,7 @@
     "name": "f5devcentral-terraform-google-f5-bigip-ha",
     "image": "mcr.microsoft.com/devcontainers/python:3.13-trixie",
     "features": {
-        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:": {
             "moby": false
         },
         "ghcr.io/memes/devcontainers-features/direnv:1": {},
