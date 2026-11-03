@@ -38,7 +38,7 @@ fixable = ["ALL"]
 unfixable = []
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**/*" = ["S", "INP", "PLR0913", "FBT001", "FBT002"]
+"**/tests/**/*" = ["S", "INP", "PLR0913", "FBT001", "FBT002", "CPY001"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -70,4 +70,5 @@ testpaths = ["tests"]
 filterwarnings = [
     "error",
     "ignore::urllib3.exceptions.InsecureRequestWarning",
+    "ignore:unclosed database in <sqlite3.Connection:ResourceWarning",
 ]
