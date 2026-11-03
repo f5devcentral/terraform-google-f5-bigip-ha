@@ -42,7 +42,7 @@ jobs:
         uses: opentofu/setup-opentofu@v2
         with:
           tofu_version: 1.11.6
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - uses: astral-sh/setup-uv@v7
