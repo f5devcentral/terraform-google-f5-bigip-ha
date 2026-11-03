@@ -12,6 +12,7 @@ updates:
   - package-ecosystem: terraform
     directories:
       - /
+      - /examples/**
       - /modules/stateless
       - /modules/template
     schedule:
