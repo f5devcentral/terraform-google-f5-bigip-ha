@@ -1,9 +1,14 @@
 {
   "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:": {
-      "version": "1.10.0",
-      "resolved": "ghcr.io/devcontainers/features/docker-outside-of-docker@sha256:c2c2cf829505ead8e4892c88c31b6594ae94a2bbb209e16e1fac456c1a3a624e",
-      "integrity": "sha256:c2c2cf829505ead8e4892c88c31b6594ae94a2bbb209e16e1fac456c1a3a624e"
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "1.10.1",
+      "resolved": "ghcr.io/devcontainers/features/docker-outside-of-docker@sha256:698f5900fac471e046c6e9d4333fec88c0e8d952c713494fa0712dce80baeca0",
+      "integrity": "sha256:698f5900fac471e046c6e9d4333fec88c0e8d952c713494fa0712dce80baeca0"
+    },
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "2.1.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:2a19d3b0b3879437637cfd292eb29fee0afcfbe6364e33db9afc4f80c5c1f956",
+      "integrity": "sha256:2a19d3b0b3879437637cfd292eb29fee0afcfbe6364e33db9afc4f80c5c1f956"
     },
     "ghcr.io/memes/devcontainers-features/direnv:1": {
       "version": "1.1.1",
@@ -19,11 +24,6 @@
       "version": "1.1.1",
       "resolved": "ghcr.io/memes/devcontainers-features/opentofu@sha256:bb61217af5fa484dfa6bdfdb17778b98db4df56a9b743dc9a9a7dce5c4b67105",
       "integrity": "sha256:bb61217af5fa484dfa6bdfdb17778b98db4df56a9b743dc9a9a7dce5c4b67105"
-    },
-    "ghcr.io/memes/devcontainers-features/starship:1": {
-      "version": "1.1.1",
-      "resolved": "ghcr.io/memes/devcontainers-features/starship@sha256:bd7bca02af0d5237ca12002890ba34ad973bcac267dba1d22def32496db07d1b",
-      "integrity": "sha256:bd7bca02af0d5237ca12002890ba34ad973bcac267dba1d22def32496db07d1b"
     },
     "ghcr.io/memes/devcontainers-features/talisman:1": {
       "version": "1.1.1",
