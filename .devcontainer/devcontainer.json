@@ -11,16 +11,16 @@
         "ghcr.io/memes/devcontainers-features/direnv:1": {},
         "ghcr.io/memes/devcontainers-features/google-cloud-cli:1": {},
         "ghcr.io/memes/devcontainers-features/opentofu:1": {
-            "version": "1.13.2"
+            "version": "1.13.9"
         },
         "ghcr.io/memes/devcontainers-features/talisman:1": {
             "version": "1.37.0"
         },
         "ghcr.io/memes/devcontainers-features/terraform-docs:1": {
-            "version": "0.24.0"
+            "version": "0.25.1"
         },
         "ghcr.io/memes/devcontainers-features/tflint:1": {
-            "version": "0.65.0"
+            "version": "0.66.0"
         }
     },
     "customizations": {
@@ -46,7 +46,6 @@
         }
     },
     "onCreateCommand": {
-        "install-deps": "sudo sh -c 'apt update && apt install -y --no-install-recommends fzf shellcheck && rm -rf /var/lib/apt/lists/*'",
         "install-uv": ["/usr/local/py-utils/bin/pipx", "install", "uv"],
         "modify-default-omz-plugins": ["/usr/bin/sed", "-i.onCreateCommand" , "-e", "/^plugins=/c\\plugins=(git dotenv)", "/home/vscode/.zshrc"]
     },

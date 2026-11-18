@@ -12,3 +12,6 @@ FROM mcr.microsoft.com/devcontainers/python:3.15-trixie
 USER root
 COPY --from=ca-certs /run/ca-certs/extracts/*.crt /usr/local/share/ca-certificates/
 RUN update-ca-certificates -v
+RUN apt update && \
+    apt install -y --no-install-recommends fzf shellcheck && \
+    rm -rf /var/lib/apt/lists/*
