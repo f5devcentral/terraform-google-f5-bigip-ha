@@ -97,7 +97,7 @@ fileignoreconfig:
 - filename: tests/test_combos.py
   checksum: 0d5826118dec9f5de527046e7fe214812189a308897202caa51ad0195f695bc2
 - filename: tests/__init__.py
-  checksum: 1d6f42b6c869ee9ba0be7e74e7498d9c9f17f92ebcf942cbaf1c5cbb8bb2bb65
+  checksum: 378a16d18540297d9ffa29ac4dd8512d84023ad8027c5e4955989b9ef5d107f2
 - filename: tests/conftest.py
   checksum: 3cd86a6a4df170ab92e1576515ff10408e9a5fe40e4cb23ce995aab803b539e4
 - filename: tests/stateless/test_combos.py

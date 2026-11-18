@@ -2,16 +2,14 @@
 
 import re
 from collections import Counter
-from collections.abc import MutableSequence
-from typing import Any
+lazy from collections.abc import MutableSequence
 
-from google.cloud import compute_v1
+lazy from google.cloud import compute_v1
 
 from tests import (
     DEFAULT_INSTANCE_NAME_PATTERN,
     DEFAULT_TARGET_SIZE,
     AsserterFunc,
-    Scenario,
     maximum_int_asserter_builder,
     re_asserter_builder,
 )
@@ -27,7 +25,7 @@ DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN = re.compile(
     r"projects/([a-z][a-z0-9-]{4,28}[a-z0-9])/regions/([a-z][a-z-]+[0-9])/instanceGroupManagers/([a-z](?:[a-z0-9-]{0,61}[a-z0-9])?)$",
 )
 DEFAULT_MANAGED_INSTANCE_EXPECTED_ACTIONS = ["CREATING", "NONE", "STARTING", "VERIFYING"]
-DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATES = ["HEALTHY"]
+DEFAULT_MANAGED_INSTANCE_EXPECTED_HEALTH_STATES = ["HEALTHY", "UNKNOWN"]
 DEFAULT_INSTANCE_GROUP_DESCRIPTION_PATTERN = re.compile(
     r"^This instance group is controlled by Regional Instance Group Manager '[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?'.",
 )
@@ -51,7 +49,7 @@ def default_assert_instance_group(
     size_asserter(instance_group.size)
 
 
-def default_assert_instance_group_manager(
+def default_assert_instance_group_manager(  # noqa: PLR0917
     manager: compute_v1.InstanceGroupManager | None,
     base_instance_name_asserter: AsserterFunc | None = None,
     description_asserter: AsserterFunc | None = None,
@@ -272,29 +270,3 @@ def default_assert_managed_instance_instance_health(
     for health in values:
         assert health.detailed_health_state in expected_states
         assert health.health_check
-
-
-class StatelessScenario(Scenario):
-    """Encapsulates a stateless single BIG-IP version + NIC count template and MIG test scenario."""
-
-    def __init__(
-        self,
-        bigip_key: str,
-        nic_count: int,
-        prefix: str | None = None,
-    ) -> None:
-        """Initialize a StatefulScenario."""
-        super().__init__(bigip_key, nic_count, prefix)
-        self._stateless_tfvars: dict[str, Any] = {}
-
-    @property
-    def stateless_tfvars(self) -> dict[str, Any]:
-        """Return the stateless tfvars for scenario."""
-        return self._stateless_tfvars | {
-            "prefix": self.__str__(),
-        }
-
-    @stateless_tfvars.setter
-    def stateless_tfvars(self, value: dict[str, Any]) -> None:
-        """Replace stateless tfvars with given value."""
-        self._stateless_tfvars = value

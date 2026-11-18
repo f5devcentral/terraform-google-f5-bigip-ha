@@ -8,11 +8,10 @@ NOTE: Public IP addresses will be added to the first and second interface so tha
       onboarding to complete.
 """
 
-import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import ipaddress
+lazy import pathlib
 
 import pytest
 from google.cloud import compute_v1
@@ -20,6 +19,7 @@ from google.cloud import compute_v1
 from tests import (
     DEFAULT_TARGET_SIZE,
     MAX_NIC_COUNT,
+    Scenario,
     default_assert_accelerator_configs,
     default_assert_advanced_machine_features,
     default_assert_confidential_instance_config,
@@ -49,7 +49,6 @@ from tests import (
 from tests.stateless import (
     DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN,
     DEFAULT_INSTANCE_GROUP_SELF_LINK_PATTERN,
-    StatelessScenario,
     default_assert_distribution_policy,
     default_assert_instance_group,
     default_assert_instance_group_manager,
@@ -68,6 +67,9 @@ from tests.stateless import (
     default_assert_named_ports,
     default_assert_stateful_policy,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 FIXTURE_NAME = "sles-combo"
 
@@ -159,19 +161,19 @@ def common_stateless_tfvars(
 
 @pytest.fixture(
     scope="module",
-    params=scenario_generator(StatelessScenario, minimum_nic_count=1),
+    params=scenario_generator(minimum_nic_count=1),
     ids=scenario_id_builder,
 )
-def scenario(
+def scenario(  # noqa: PLR0917
     request: pytest.FixtureRequest,
     fixture_name: str,
     common_template_tfvars: dict[str, Any],
     common_stateless_tfvars: dict[str, Any],
     subnet_self_links: list[str],
     runtime_init_conf_1nic: str,
-) -> StatelessScenario:
+) -> Scenario:
     """Return a Scenario objects for the combination of BIG-IP images under test and NIC counts."""
-    scenario = cast("StatelessScenario", request.param)
+    scenario = cast("Scenario", request.param)
     scenario.prefix = fixture_name
     template_tfvars = common_template_tfvars | {
         "interfaces": [
@@ -186,38 +188,38 @@ def scenario(
     # Single-NIC scenario must use the runtime-init configuration that is specific to it
     if scenario.nic_count == 1:
         template_tfvars["runtime_init_config"] = runtime_init_conf_1nic
-    scenario.tfvars = template_tfvars
-    scenario.stateless_tfvars = common_stateless_tfvars
+    scenario.primary_tfvars = template_tfvars
+    scenario.secondary_tfvars = common_stateless_tfvars
     return scenario
 
 
 @pytest.fixture(scope="module")
 def template_fixture_output(
     template_fixture_dir: Callable[[str], pathlib.Path],
-    scenario: StatelessScenario,
-) -> Generator[tuple[StatelessScenario, dict[str, Any]]]:
+    scenario: Scenario,
+) -> Generator[tuple[Scenario, dict[str, Any]]]:
     """Create an Instance Template for test scenario."""
     with run_tf_in_workspace(
         fixture=template_fixture_dir(f"{scenario!s}-tmpl"),
-        tfvars=scenario.tfvars,
+        tfvars=scenario.primary_tfvars,
     ) as output:
         self_link = cast("str", output["self_link"])
         assert self_link
-        scenario.stateless_tfvars = scenario.stateless_tfvars | {"instance_template": self_link}
+        scenario.secondary_tfvars = scenario.secondary_tfvars | {"instance_template": self_link}
         yield (scenario, output)
 
 
 @pytest.fixture(scope="module")
 def fixture_output(
     fixture_dir: Callable[[str], pathlib.Path],
-    template_fixture_output: tuple[StatelessScenario, dict[str, Any]],
+    template_fixture_output: tuple[Scenario, dict[str, Any]],
     wait_for_instance_group_manager_deleted: Callable[..., None],
-) -> Generator[tuple[StatelessScenario, dict[str, Any]]]:
+) -> Generator[tuple[Scenario, dict[str, Any]]]:
     """Create a MIG using template for test scenario."""
     scenario = template_fixture_output[0]
     with run_tf_in_workspace(
         fixture=fixture_dir(str(scenario)),
-        tfvars=scenario.stateless_tfvars,
+        tfvars=scenario.secondary_tfvars,
     ) as output:
         self_link = cast("str", output["instance_group_manager"])
         yield (scenario, output)
@@ -227,8 +229,8 @@ def fixture_output(
 @pytest.fixture(scope="module")
 def managed_instances_for_scenario(
     region_instance_group_managers_client: compute_v1.RegionInstanceGroupManagersClient,
-    fixture_output: tuple[StatelessScenario, dict[str, Any]],
-) -> tuple[StatelessScenario, list[compute_v1.ManagedInstance]]:
+    fixture_output: tuple[Scenario, dict[str, Any]],
+) -> tuple[Scenario, list[compute_v1.ManagedInstance]]:
     """Return the list of Compute Engine ManagedInstances."""
     scenario = fixture_output[0]
     output_values = fixture_output[1]
@@ -255,8 +257,8 @@ def managed_instances_for_scenario(
 def instances_for_scenario(
     instances_builder: Callable[[list[str]], list[compute_v1.Instance]],
     wait_for_onboarding_complete: Callable[..., compute_v1.Instance],
-    managed_instances_for_scenario: tuple[StatelessScenario, list[compute_v1.ManagedInstance]],
-) -> tuple[StatelessScenario, list[compute_v1.Instance]]:
+    managed_instances_for_scenario: tuple[Scenario, list[compute_v1.ManagedInstance]],
+) -> tuple[Scenario, list[compute_v1.Instance]]:
     """Return a list of Compute Engine Instances from ManagedInstances list."""
     scenario = managed_instances_for_scenario[0]
     managed_instances = managed_instances_for_scenario[1]
@@ -272,9 +274,9 @@ def instances_for_scenario(
 @pytest.fixture(scope="module")
 def instance_group_manager_for_scenario(
     region_instance_group_managers_client: compute_v1.RegionInstanceGroupManagersClient,
-    fixture_output: tuple[StatelessScenario, dict[str, Any]],
-    instances_for_scenario: tuple[StatelessScenario, list[compute_v1.Instance]],  # noqa: ARG001 # Depend on BIG-IP VE onboarding to complete
-) -> tuple[StatelessScenario, compute_v1.InstanceGroupManager]:
+    fixture_output: tuple[Scenario, dict[str, Any]],
+    instances_for_scenario: tuple[Scenario, list[compute_v1.Instance]],  # noqa: ARG001 # Depend on BIG-IP VE onboarding to complete
+) -> tuple[Scenario, compute_v1.InstanceGroupManager]:
     """Return an InstanceGroupManager from the output."""
     scenario = fixture_output[0]
     output_values = fixture_output[1]
@@ -297,9 +299,9 @@ def instance_group_manager_for_scenario(
 @pytest.fixture(scope="module")
 def instance_group_for_scenario(
     region_instance_groups_client: compute_v1.RegionInstanceGroupsClient,
-    fixture_output: tuple[StatelessScenario, dict[str, Any]],
-    instances_for_scenario: tuple[StatelessScenario, list[compute_v1.Instance]],  # noqa: ARG001 # Depend on BIG-IP VE onboarding to complete
-) -> tuple[StatelessScenario, compute_v1.InstanceGroup]:
+    fixture_output: tuple[Scenario, dict[str, Any]],
+    instances_for_scenario: tuple[Scenario, list[compute_v1.Instance]],  # noqa: ARG001 # Depend on BIG-IP VE onboarding to complete
+) -> tuple[Scenario, compute_v1.InstanceGroup]:
     """Return an InstanceGroup from the output."""
     scenario = fixture_output[0]
     output_values = fixture_output[1]
@@ -322,7 +324,7 @@ def instance_group_for_scenario(
 def test_output_values(
     project_id: str,
     region: str,
-    fixture_output: tuple[StatelessScenario, dict[str, Any]],
+    fixture_output: tuple[Scenario, dict[str, Any]],
 ) -> None:
     """Verify the fixture output meets expectations."""
     assert fixture_output is not None
@@ -345,7 +347,7 @@ def test_output_values(
 def test_instance_group_manager(
     project_id: str,
     region: str,
-    instance_group_manager_for_scenario: tuple[StatelessScenario, compute_v1.InstanceGroupManager],
+    instance_group_manager_for_scenario: tuple[Scenario, compute_v1.InstanceGroupManager],
 ) -> None:
     """Raise an AssertionError if the regional MIG properties do not match expectations."""
     scenario = instance_group_manager_for_scenario[0]
@@ -383,7 +385,7 @@ def test_instance_group_manager(
 
 
 def test_instance_group(
-    instance_group_for_scenario: tuple[StatelessScenario, compute_v1.InstanceGroup],
+    instance_group_for_scenario: tuple[Scenario, compute_v1.InstanceGroup],
 ) -> None:
     """Raise an AssertionError if the instance group properties do not match expectations."""
     instance_group = instance_group_for_scenario[1]
@@ -393,7 +395,7 @@ def test_instance_group(
 
 
 def test_managed_instances(
-    managed_instances_for_scenario: tuple[StatelessScenario, list[compute_v1.ManagedInstance]],
+    managed_instances_for_scenario: tuple[Scenario, list[compute_v1.ManagedInstance]],
 ) -> None:
     """Raise an AssertionError if the instances associated with the regional MIG do not match expectations."""
     managed_instances = managed_instances_for_scenario[1]
@@ -404,10 +406,10 @@ def test_managed_instances(
         default_assert_managed_instance_instance_health(instance.instance_health)
 
 
-def test_instances(
+def test_instances(  # noqa: PLR0917
     guest_attributes_asserter: Callable[..., None],
     bigip_is_ready_asserter: Callable[..., None],
-    instances_for_scenario: tuple[StatelessScenario, list[compute_v1.Instance]],
+    instances_for_scenario: tuple[Scenario, list[compute_v1.Instance]],
     sa_email: str,
     fixture_labels: dict[str, str],
     fixture_metadata: dict[str, str],

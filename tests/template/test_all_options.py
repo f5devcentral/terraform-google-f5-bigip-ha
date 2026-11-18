@@ -3,11 +3,10 @@
 NOTE: The image is deliberately chosen to be a Google image so that gvNIC option can be asserted.
 """
 
-import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator, MutableSequence
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import ipaddress
+lazy import pathlib
 
 import pytest
 from google.cloud import compute_v1
@@ -33,6 +32,9 @@ from tests.template import (
     default_assert_instance_properties,
     default_assert_instance_template,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, MutableSequence
 
 FIXTURE_NAME = "tmpl-all"
 FIXTURE_DESCRIPTION = "BIG-IP HA template test with all the things"
@@ -110,7 +112,7 @@ def subnet_self_links(
 
 
 @pytest.fixture(scope="module")
-def fixture_output(
+def fixture_output(  # noqa: PLR0917
     template_fixture_dir: Callable[[str], pathlib.Path],
     project_id: str,
     runtime_init_conf: str,
@@ -172,7 +174,7 @@ def test_output_values(project_id: str, fixture_name: str, fixture_output: dict[
     assert re.search(f"{fixture_name}[0-9]+$", name)
 
 
-def test_instance_template(
+def test_instance_template(  # noqa: PLR0917
     instance_templates_client: compute_v1.InstanceTemplatesClient,
     project_id: str,
     sa_email: str,

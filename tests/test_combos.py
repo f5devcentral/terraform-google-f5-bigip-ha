@@ -9,13 +9,12 @@ NOTE: Public IP addresses will be added to the first and second interface so tha
 """
 
 import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import pathlib
 
 import pytest
-from google.cloud import compute_v1
+lazy from google.cloud import compute_v1
 
 from tests import (
     DEFAULT_TARGET_SIZE,
@@ -46,6 +45,9 @@ from tests import (
     scenario_generator,
     scenario_id_builder,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 FIXTURE_NAME = "root-combo"
 
@@ -133,7 +135,7 @@ def common_tfvars(
 
 @pytest.fixture(
     scope="module",
-    params=scenario_generator(Scenario),
+    params=scenario_generator(),
     ids=scenario_id_builder,
 )
 def scenario(
@@ -145,7 +147,7 @@ def scenario(
     """Return a Scenario object for each combination of BIG-IP images under test and NIC counts."""
     scenario = cast("Scenario", request.param)
     scenario.prefix = fixture_name
-    scenario.tfvars = common_tfvars | {
+    scenario.primary_tfvars = common_tfvars | {
         "interfaces": [
             {
                 "subnet_id": self_link,
@@ -166,7 +168,7 @@ def fixture_output(
     """Create a Compute Engine instance template for a test scenario."""
     with run_tf_in_workspace(
         fixture=fixture_dir(str(scenario)),
-        tfvars=scenario.tfvars,
+        tfvars=scenario.primary_tfvars,
     ) as output:
         yield (scenario, output)
 
@@ -230,7 +232,7 @@ def test_output_values(
     assert cluster_tag
 
 
-def test_instances(
+def test_instances(  # noqa: PLR0917
     guest_attributes_asserter: Callable[..., None],
     bigip_is_ready_asserter: Callable[..., None],
     active_standby_asserter: Callable[..., None],

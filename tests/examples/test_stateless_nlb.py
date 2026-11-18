@@ -1,17 +1,19 @@
 """Test fixture for stateless-nlb example using local module sources."""
 
 import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import pathlib
 
 import pytest
 import requests
 from google.cloud import compute_v1
 
-from tests import DEFAULT_TARGET_SIZE, run_tf_in_workspace
+from tests import DEFAULT_REQUESTS_TIMEOUT, DEFAULT_TARGET_SIZE, run_tf_in_workspace
 from tests.stateless import DEFAULT_INSTANCE_GROUP_MANAGER_SELF_LINK_PATTERN, DEFAULT_INSTANCE_GROUP_SELF_LINK_PATTERN
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 FIXTURE_NAME = "ex-sles-nlb"
 
@@ -53,7 +55,7 @@ def subnet_self_links(
 
 
 @pytest.fixture(scope="module")
-def fixture_output(
+def fixture_output(  # noqa: PLR0917
     project_id: str,
     region: str,
     source_cidr: str,
@@ -188,6 +190,6 @@ def test_vip(
     assert vip
     # The example does not output the backend service self-link, but it should match the fixture_name
     wait_for_backend_service_healthy(self_link=f"projects/{project_id}/regions/{region}/backendServices/{fixture_name}")
-    response = requests.get(url=f"https://{vip}/", verify=False)
+    response = requests.get(url=f"https://{vip}/", verify=False, timeout=DEFAULT_REQUESTS_TIMEOUT)
     assert response.status_code == requests.codes["ok"]
-    assert response.json
+    assert response.json()

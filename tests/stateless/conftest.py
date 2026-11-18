@@ -2,9 +2,9 @@
 
 import pathlib
 import shutil
-from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
+lazy from collections.abc import Callable
 
 import pytest
 
