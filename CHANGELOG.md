@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.2.3...v0.2.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* Update BIG-IP BYOL with NLB to v21.1.0 ([6c31542](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/6c31542fe6705f21ee42b30547b572c7ce8ad28a))
+* Update default BIG-IP version to latest v21.1 ([ca29127](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/commit/ca291270ebb66521e4c6c036d038590d5d5e36b0))
+
 ## [0.2.3](https://github.com/f5devcentral/terraform-google-f5-bigip-ha/compare/v0.2.2...v0.2.3) (2026-05-01)
 
 
