@@ -114,8 +114,10 @@ extension_services:
                   use: hc_source_cidrs
                 virtualPort: 26000
                 shareAddresses: true
+                # wildcard is failing on v17.5.1, use primary address
+                # https://cdn.f5.com/product/bugtracker/ID2313477.html,https://my.f5.com/manage/s/article/K000161772
                 virtualAddresses:
-                  - 0.0.0.0
+                  - '{{{ SELF_IP_PRIMARY_ADDRESS }}}'
 post_onboard_enabled:
   - name: save_config
     type: inline
