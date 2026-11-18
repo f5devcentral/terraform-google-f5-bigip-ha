@@ -99,7 +99,7 @@ resource "google_secret_manager_secret_version" "admin_password" {
   ]
 }
 
-# Define an instance template for the BIG-IP VMs that will be launched by a MIG.
+# This will create a BIG-IP HA pair with required firewall rules for DSC.
 module "bigip_ha" {
   source     = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v0.2.3"
   project_id = var.project_id
