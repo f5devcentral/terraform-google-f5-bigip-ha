@@ -99,7 +99,8 @@ resource "google_secret_manager_secret_version" "admin_password" {
   ]
 }
 
-# Define an instance template for the BIG-IP VMs that will be launched by a MIG.
+
+# This will create a BIG-IP HA pair with required firewall rules for DSC.
 module "bigip_ha" {
   source     = "git::https://github.com/f5devcentral/terraform-google-f5-bigip-ha?ref=v0.2.3"
   project_id = var.project_id
@@ -115,7 +116,7 @@ module "bigip_ha" {
   } }
 
   # Use a bring-your-own-license (BYOL) image; the BIG-IP will be inactive until the license is applied by runtime-init.
-  image = "projects/f5-7626-networks-public/global/images/f5-bigip-21-0-0-1-0-0-13-byol-ltm-1boot-loc-260128094804"
+  image = "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-4-0-0-3-byol-all-modules-2boot-loc-61023050451"
 
   # For consistent and predictable naming, it is important to set the common DNS domain name to use with instances; for
   # example 'your-domain.com'. Instances will be given the host name "{prefix}-0n.{host_domain}".
