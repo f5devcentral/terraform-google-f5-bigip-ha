@@ -4,7 +4,6 @@ import ipaddress
 import itertools
 import json
 import os
-import pathlib
 import re
 import shutil
 import subprocess
@@ -14,24 +13,26 @@ from contextlib import contextmanager
 from datetime import timedelta
 from operator import itemgetter
 from typing import Any
+lazy import pathlib
 
 import jsonschema
 import referencing
 import requests
 import yaml
-from google.cloud import compute_v1
+lazy from google.cloud import compute_v1
 
 type AsserterFunc = Callable[[int | str | None], None]
 
 # This must match the value hard-coded in the runtime-init files.
 ADMIN_USER_PASSWORD = "3408ytqe^f23"  # spell-checker: disable-line
 
-# The BIG-IP version and image to test
+# The BIG-IP version and image to test, constrained to the latest available PAYG Good 1Gbps image that aligns with the
+# "Major Release, Minor Release, and Long-Term Stability Release versions supported with active software development" as
+# found at https://my.f5.com/manage/s/article/K5903 at time of commit.
 BIG_IP_IMAGES = {
-    "21.0.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-0-0-1-0-0-13-payg-good-1gbps-260128095422",
-    "17.5.1": "projects/f5-7626-networks-public/global/images/f5-bigip-17-5-1-5-0-0-6-payg-good-1gbps-260227021543",
-    "16.1.6": "projects/f5-7626-networks-public/global/images/f5-bigip-16-1-6-1-0-0-11-payg-good-1gbps-251008153005",
-    "15.1.10": "projects/f5-7626-networks-public/global/images/f5-bigip-15-1-10-8-0-0-30-payg-good-1gbps-251008214435",
+    "21.1.0": "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-4-0-0-3-payg-good-1gbps-261023033836",
+    "17.5.1": "projects/f5-7626-networks-public/global/images/f5-bigip-17-5-1-9-0-174-12-payg-good-1gbps-260922153225",
+    "17.1.3": "projects/f5-7626-networks-public/global/images/f5-bigip-17-1-3-7-0-0-4-payg-good-1gbps-261023030117",
 }
 
 # Test scenarios will be built that are the product of BIG-IP versions and various NIC assignments; since these tests
@@ -59,11 +60,12 @@ DEFAULT_INSTANCE_SERVICE_ACCOUNT_EMAIL_PATTERN = re.compile(
 )
 
 DEFAULT_WAIT_FOR_TIMEOUT = timedelta(seconds=1200)
+DEFAULT_REQUESTS_TIMEOUT = (30, 10)
 
 
 def _schema_fetcher(uri: str) -> referencing.Resource:
     """Return a JSON Schema resource from URI."""
-    return referencing.Resource.from_contents(requests.get(uri).json())
+    return referencing.Resource.from_contents(requests.get(uri, timeout=DEFAULT_REQUESTS_TIMEOUT).json())
 
 
 _registry = referencing.Registry(retrieve=_schema_fetcher)
@@ -180,7 +182,7 @@ def run_tf_in_workspace(
                 workspace,
             ],
             check=True,
-            capture_output=True,
+            capture_output=False,
         )
     subprocess.run(
         [
@@ -191,7 +193,7 @@ def run_tf_in_workspace(
             "-input=false",
         ],
         check=True,
-        capture_output=True,
+        capture_output=False,
     )
     with tempfile.NamedTemporaryFile(
         mode="w",
@@ -223,7 +225,7 @@ def run_tf_in_workspace(
                     f"-out={plan_file.name}",
                 ],
                 check=True,
-                capture_output=True,
+                capture_output=False,
             )
             subprocess.run(
                 args=[
@@ -236,7 +238,7 @@ def run_tf_in_workspace(
                     plan_file.name,
                 ],
                 check=True,
-                capture_output=True,
+                capture_output=False,
             )
 
         # Run plan again with -detailed-exitcode flag, which will only return an exit code of 0 if there are no further
@@ -253,7 +255,7 @@ def run_tf_in_workspace(
                 f"-var-file={tfvar_file.name}",
             ],
             check=True,
-            capture_output=True,
+            capture_output=False,
         )
         output = subprocess.run(
             [
@@ -280,7 +282,7 @@ def run_tf_in_workspace(
                         f"-var-file={tfvar_file.name}",
                     ],
                     check=True,
-                    capture_output=True,
+                    capture_output=False,
                 )
         finally:
             subprocess.run(
@@ -292,7 +294,7 @@ def run_tf_in_workspace(
                     "default",
                 ],
                 check=True,
-                capture_output=True,
+                capture_output=False,
             )
 
 
@@ -319,7 +321,7 @@ def run_tf_test(
                 workspace,
             ],
             check=True,
-            capture_output=True,
+            capture_output=False,
         )
     subprocess.run(
         [
@@ -330,7 +332,7 @@ def run_tf_test(
             "-input=false",
         ],
         check=True,
-        capture_output=True,
+        capture_output=False,
     )
     with tempfile.NamedTemporaryFile(
         mode="w",
@@ -356,7 +358,7 @@ def run_tf_test(
         yield [json.loads(line) for line in output.stdout.splitlines()]
 
 
-def default_assert_instance(
+def default_assert_instance(  # noqa: PLR0917
     instance: compute_v1.Instance | None,
     description_asserter: AsserterFunc | None = None,
     hostname_asserter: AsserterFunc | None = None,
@@ -622,7 +624,7 @@ def default_assert_tags(tags: compute_v1.Tags | None, expected_tags: list[str] |
 
 
 class Scenario:
-    """Encapsulates a single BIG-IP version + NIC count stateful test scenario."""
+    """Encapsulates a single BIG-IP version + NIC count test scenario."""
 
     def __init__(
         self,
@@ -630,7 +632,7 @@ class Scenario:
         nic_count: int,
         prefix: str | None = None,
     ) -> None:
-        """Initialize a StatefulScenario."""
+        """Initialize a Scenario."""
         if bigip_key not in BIG_IP_IMAGES:
             raise ValueError(f"Unknown BIG-IP key '{bigip_key}'")  # noqa: EM102, TRY003
         if nic_count < 1 or nic_count > 8:  # noqa: PLR2004
@@ -638,28 +640,41 @@ class Scenario:
         self.bigip_key = bigip_key
         self.nic_count = nic_count
         self.prefix = prefix
-        self._tfvars: dict[str, Any] = {}
+        self._primary_tfvars: dict[str, Any] = {}
+        self._secondary_tfvars: dict[str, Any] = {}
 
     def __str__(self) -> str:
         """Return a string for this scenario."""
         return f"{self.prefix}{'-' if self.prefix else ''}{self.bigip_key.replace('.', '-')}-{self.nic_count}n"
 
     @property
-    def tfvars(self) -> dict[str, Any]:
-        """Return the tfvars for scenario."""
+    def primary_tfvars(self) -> dict[str, Any]:
+        """Return the primary tfvars for scenario."""
         interfaces = [
-            interface for i, interface in enumerate(self._tfvars.get("interfaces", [])) if i <= self.nic_count
+            interface for i, interface in enumerate(self._primary_tfvars.get("interfaces", [])) if i <= self.nic_count
         ]
-        return self._tfvars | {
+        return self._primary_tfvars | {
             "prefix": self.__str__(),
             "image": BIG_IP_IMAGES.get(self.bigip_key),
             "interfaces": interfaces,
         }
 
-    @tfvars.setter
-    def tfvars(self, value: dict[str, Any]) -> None:
-        """Replace tfvars with given value."""
-        self._tfvars = value
+    @primary_tfvars.setter
+    def primary_tfvars(self, value: dict[str, Any]) -> None:
+        """Replace primary_tfvars with given value."""
+        self._primary_tfvars = value
+
+    @property
+    def secondary_tfvars(self) -> dict[str, Any]:
+        """Return the secondary tfvars for scenario."""
+        return self._secondary_tfvars | {
+            "prefix": self.__str__(),
+        }
+
+    @secondary_tfvars.setter
+    def secondary_tfvars(self, value: dict[str, Any]) -> None:
+        """Replace secondary_tfvars with given value."""
+        self._secondary_tfvars = value
 
     @property
     def expected_description(self) -> str:
@@ -680,12 +695,11 @@ def scenario_id_builder(scenario: Scenario) -> str:
     return f"{scenario.bigip_key}-{scenario.nic_count}n"
 
 
-def scenario_generator[T](
-    scenario_type: type[T],
+def scenario_generator(
     versions: set[str] | None = None,
     minimum_nic_count: int | None = None,
     maximum_nic_count: int | None = None,
-) -> list[T]:
+) -> list[Scenario]:
     """Return a sorted list of Scenarios for the BIG-IP versions and NIC count limits."""
     if versions is None:
         versions = set(BIG_IP_IMAGES)
@@ -694,7 +708,7 @@ def scenario_generator[T](
     if maximum_nic_count is None:
         maximum_nic_count = MAX_NIC_COUNT
     return [
-        scenario_type(bigip_key=x[0], nic_count=x[1])
+        Scenario(bigip_key=x[0], nic_count=x[1])
         for x in sorted(
             itertools.product(versions, set(range(minimum_nic_count, maximum_nic_count + 1))),
             key=itemgetter(0, 1),

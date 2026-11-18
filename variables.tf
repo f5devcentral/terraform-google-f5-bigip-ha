@@ -111,7 +111,7 @@ variable "image" {
     condition     = can(regex("^(?:https://www.googleapis.com/compute/v1/)?projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/global/images/[a-z][a-z0-9-]{0,61}[a-z0-9]", var.image))
     error_message = "The image variable must be a fully-qualified URI."
   }
-  default     = "projects/f5-7626-networks-public/global/images/f5-bigip-21-0-0-1-0-0-13-payg-good-10gbps-260128095822"
+  default     = "projects/f5-7626-networks-public/global/images/f5-bigip-21-1-0-4-0-0-3-payg-good-10gbps-261023034344"
   description = <<-EOD
 The self-link URI for a BIG-IP image to use as a base for the VM cluster. This
 can be an official F5 image from GCP Marketplace, or a customised image. The default value is the latest BIG-IP v21 PAYG

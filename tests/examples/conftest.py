@@ -5,9 +5,9 @@ import re
 import shutil
 import time
 from collections import Counter
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+lazy from collections.abc import Callable
 
 import pytest
 from google.api_core import exceptions
@@ -39,7 +39,7 @@ def examples_dir() -> pathlib.Path:
 
 
 @pytest.fixture(scope="session")
-def fixture_dir(
+def fixture_dir(  # noqa: PLR0917
     tmp_path_factory: pytest.TempPathFactory,
     backend_tf_builder: Callable[..., None],
     common_fixture_dir_ignores: Callable[[Any, list[str]], set[str]],
@@ -153,7 +153,23 @@ def wait_for_backend_service_healthy(
     ) -> None:
         if minimum_healthy_count is None:
             minimum_healthy_count = 1
-        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
+        assert self_link
+        match = re.search(DEFAULT_BACKEND_SERVICE_SELF_LINK_PATTERN, self_link)
+        assert match
+        project, region, name = match.groups()
+        try:
+            backend_service = region_backend_services_client.get(
+                request=compute_v1.GetRegionBackendServiceRequest(
+                    project=project,
+                    region=region,
+                    backend_service=name,
+                ),
+            )
+            timeout_ts = datetime.fromisoformat(backend_service.creation_timestamp) + (
+                timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT
+            )
+        except exceptions.NotFound:
+            timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
         while not _ready(self_link=self_link, minimum_healthy_count=minimum_healthy_count):
             if datetime.now(UTC) > timeout_ts:
                 raise TimeoutError
@@ -211,7 +227,23 @@ def wait_for_target_pool_healthy(
     ) -> None:
         if minimum_healthy_count is None:
             minimum_healthy_count = 1
-        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
+        assert self_link
+        match = re.search(DEFAULT_TARGET_POOL_SELF_LINK_PATTERN, self_link)
+        assert match
+        project, region, name = match.groups()
+        try:
+            target_pool = target_pools_client.get(
+                request=compute_v1.GetTargetPoolRequest(
+                    project=project,
+                    region=region,
+                    target_pool=name,
+                ),
+            )
+            timeout_ts = datetime.fromisoformat(target_pool.creation_timestamp) + (
+                timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT
+            )
+        except exceptions.NotFound:
+            timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
         while not _ready(self_link=self_link, minimum_healthy_count=minimum_healthy_count):
             if datetime.now(UTC) > timeout_ts:
                 raise TimeoutError

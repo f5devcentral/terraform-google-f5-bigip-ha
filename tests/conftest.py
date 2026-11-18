@@ -7,9 +7,9 @@ import re
 import shutil
 import time
 from collections import Counter
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+lazy from collections.abc import Callable
 
 import google.auth
 import pytest
@@ -21,6 +21,7 @@ from google.cloud import compute_v1, iam_admin_v1, secretmanager_v1, storage
 from tests import (
     ADMIN_USER_PASSWORD,
     DEFAULT_INSTANCE_SELF_LINK_PATTERN,
+    DEFAULT_REQUESTS_TIMEOUT,
     DEFAULT_WAIT_FOR_TIMEOUT,
     MAX_NIC_COUNT,
     skip_destroy_phase,
@@ -316,6 +317,7 @@ def sys_ready_retriever() -> Callable[[compute_v1.Instance, str | None], dict[st
             url=f"{management_url(instance)}/mgmt/tm/sys/ready",
             auth=requests.auth.HTTPBasicAuth(username="admin", password=password),
             verify=False,
+            timeout=DEFAULT_REQUESTS_TIMEOUT,
         ).json()
 
     return _retriever
@@ -332,6 +334,7 @@ def cm_device_retriever() -> Callable[[compute_v1.Instance, str | None], dict[st
             url=f"{management_url(instance)}/mgmt/tm/cm/device/{instance.hostname}",
             auth=requests.auth.HTTPBasicAuth(username="admin", password=password),
             verify=False,
+            timeout=DEFAULT_REQUESTS_TIMEOUT,
         ).json()
 
     return _retriever
@@ -418,7 +421,10 @@ def wait_for_onboarding_complete(
         return response.variable_value == "complete"
 
     def _wait(instance: compute_v1.Instance, timeout: timedelta | None = None) -> compute_v1.Instance:
-        timeout_ts = datetime.now(UTC) + (timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT)
+        assert instance
+        timeout_ts = datetime.fromisoformat(instance.creation_timestamp) + (
+            timeout if timeout is not None else DEFAULT_WAIT_FOR_TIMEOUT
+        )
         while not _onboarding_complete(instance):
             if datetime.now(UTC) > timeout_ts:
                 raise TimeoutError
@@ -661,7 +667,7 @@ def service_account_builder(
                 name=f"projects/{project_id}",
             )
             sa = next(sa for sa in sa_accounts if re.search(f"serviceAccounts/{name}", sa.name))
-        except (StopIteration, exceptions.NotFound):
+        except StopIteration, exceptions.NotFound:
             sa = iam_admin_client.create_service_account(
                 request=iam_admin_v1.CreateServiceAccountRequest(
                     account_id=name,
@@ -699,7 +705,7 @@ def firewalls_client() -> compute_v1.FirewallsClient:
 @pytest.fixture(scope="session")
 def source_cidr() -> str:
     """Return the public IPv4 address of this testing machine, as reported by AWS, to use as testing source CIDR."""
-    ip_address = requests.get("https://checkip.amazonaws.com").text.strip()
+    ip_address = requests.get("https://checkip.amazonaws.com", timeout=DEFAULT_REQUESTS_TIMEOUT).text.strip()
     assert ip_address
     return f"{ip_address}/32"
 

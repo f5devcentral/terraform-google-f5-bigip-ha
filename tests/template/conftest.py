@@ -3,7 +3,7 @@
 import base64
 import gzip
 import pathlib
-from collections.abc import Callable
+lazy from collections.abc import Callable
 
 import jinja2
 import pytest

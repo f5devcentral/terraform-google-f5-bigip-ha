@@ -5,13 +5,12 @@ enable guest attributes; host validation will not be performed.
 """
 
 import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator, MutableSequence
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import pathlib
 
 import pytest
-from google.cloud import compute_v1
+lazy from google.cloud import compute_v1
 
 from tests import (
     DEFAULT_INSTANCE_NIC_TYPE,
@@ -38,6 +37,9 @@ from tests import (
     run_tf_in_workspace,
     unset_asserter,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, MutableSequence
 
 FIXTURE_NAME = "root-min"
 

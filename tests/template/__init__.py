@@ -1,10 +1,10 @@
 """Assertions common to template module test cases."""
 
-import ipaddress
 import re
-from collections.abc import MutableSequence
+lazy import ipaddress
+lazy from collections.abc import MutableSequence
 
-from google.cloud import compute_v1
+lazy from google.cloud import compute_v1
 
 from tests import (
     DEFAULT_INSTANCE_BOOT_DISK_TYPE,

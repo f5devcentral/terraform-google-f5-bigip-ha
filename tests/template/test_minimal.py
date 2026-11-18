@@ -1,10 +1,9 @@
 """Test fixture for 1-NIC BIG-IP HA instance template with minimal required values."""
 
-import ipaddress
-import pathlib
 import re
-from collections.abc import Callable, Generator
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+lazy import ipaddress
+lazy import pathlib
 
 import pytest
 from google.cloud import compute_v1
@@ -31,6 +30,9 @@ from tests.template import (
     default_assert_instance_template,
     default_assert_network_interfaces,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 FIXTURE_NAME = "tmpl-min"
 
@@ -135,11 +137,11 @@ def test_instance_template(
     )
     default_assert_instance_template(
         instance_template,
-        description_asserter=equal_asserter_builder("1-nic BIG-IP instance template for v21.0.0"),
+        description_asserter=equal_asserter_builder("1-nic BIG-IP instance template for v21.1.0"),
     )
     default_assert_instance_properties(
         instance_template.properties,
-        description_asserter=equal_asserter_builder("1-nic BIG-IP v21.0.0"),
+        description_asserter=equal_asserter_builder("1-nic BIG-IP v21.1.0"),
     )
     default_assert_advanced_machine_features(instance_template.properties.advanced_machine_features)
     default_assert_confidential_instance_config(instance_template.properties.confidential_instance_config)
